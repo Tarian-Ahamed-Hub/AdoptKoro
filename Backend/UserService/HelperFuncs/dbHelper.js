@@ -3,10 +3,11 @@ const mongoose = require('mongoose');
 module.exports.dbHandler = async (res, fn) => {
 
   try {
-    return await fn();
+    const result = await fn();
+    return result;
   } 
   catch (err) {
-
+    console.error('Database error:', err);
    
     if (err.code === 11000) {
       return res.status(409).json({

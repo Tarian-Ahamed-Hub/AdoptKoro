@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-
+const http = require('http')
 const app = express();
 
 
@@ -10,5 +10,7 @@ app.use('/api/user', createProxyMiddleware({ target: process.env.USER_SERVICE_UR
 // app.use('/interactions', createProxyMiddleware({ target: process.env.INTERACTION_SERVICE_URL, changeOrigin: true }));
 
 app.get('/', (req, res) => res.send('Pet Adoption API Gateway Running'));
+const port= process.env.GATEWAY_PORT;
 
-app.listen(process.env.PORT, () => console.log('API Gateway on port 8000'));
+const appServer = http.createServer(app)
+appServer.listen(port, () => console.log(`Gateway-Service running on port ${port}`));

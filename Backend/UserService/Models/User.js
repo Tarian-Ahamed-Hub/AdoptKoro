@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
     },
     email: {
       type: String,
@@ -30,9 +29,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    role: {
-      type: Number,
-      default: 0,  
+    roles: {
+      type: [String],
+      default:[],  
     },
     verified: {
       type: Boolean,
