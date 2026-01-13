@@ -18,13 +18,14 @@ try {
   const cacheRedis = getRedisClient();
   const isBlocked = await cacheRedis.get(`tokenBlock:${decoded.tokenId}`);
   if(isBlocked){
+   
     return res.status(401).json({
      message: "Unauthenticated",
      err:"User is not authenticated,logged out already"
 
   })
   }
-  
+ 
   for(const role of roles){
      if(!decoded.roles.includes(role)){
         return res.status(403).json({

@@ -6,7 +6,7 @@ const User = require("../../Models/User");
 const { dbHandler } = require("../../HelperFuncs/dbHelper");
 const { createToken } = require("../../HelperFuncs/GlobalHelper");
 const { v4: uuidv4 } = require("uuid");
-const { cacheRedis } = require("../../Configs/cacheRedis");
+const { cacheRedis, getRedisClient } = require("../../Configs/cacheRedis");
 const {autheticateUserHelper} = require("../../HelperFuncs/authenticate");
 const  mongoose = require("mongoose");
 
@@ -87,12 +87,19 @@ const logout = async(req,res)=>{
        const decoded = jwt.verify(sessionToken,process.env.JWT_SECRET);
        
        const ttl = decoded.exp - Math.floor(Date.now()/1000);
-       await cacheRedis.set(
-        `tokenBlock:${decoded.tokenId}`,
-        1,
-        {EX:ttl}
-       )
-       
+     
+       if(ttl>0){
+          const cacheRedis = getRedisClient();
+
+          await cacheRedis.set(
+            `tokenBlock:${decoded.tokenId}`,
+            "1",
+            "EX",
+            ttl
+          );
+       }
+      
+   
        res.status(200).clearCookie("sessionToken",{
          httpOnly: true,
          secure: process.env.PRODUCTION === "true",  
@@ -115,7 +122,8 @@ const logout = async(req,res)=>{
          sameSite: "lax",                            
          path: "/", 
        }).json({
-          message:"logged out"
+          message:`logged out . ${err.message}`
+          
        })
     }
   
