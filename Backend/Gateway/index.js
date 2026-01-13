@@ -5,7 +5,7 @@ const http = require('http')
 const app = express();
 
 
-app.use('/api/user', createProxyMiddleware({ target: process.env.USER_SERVICE_URL, changeOrigin: true }));
+app.use('/api/auth', createProxyMiddleware({ target: process.env.USER_SERVICE_URL, changeOrigin: true }));
 // app.use('/posts', createProxyMiddleware({ target: process.env.POST_SERVICE_URL, changeOrigin: true }));
 // app.use('/interactions', createProxyMiddleware({ target: process.env.INTERACTION_SERVICE_URL, changeOrigin: true }));
 

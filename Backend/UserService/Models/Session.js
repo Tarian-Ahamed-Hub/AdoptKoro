@@ -7,11 +7,12 @@ const SessionSchema = new mongoose.Schema(
         required:true,
         index:true
       },
-      email:{
-        type:String,
-        required:true,
-        index:true
+      userId:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User",
+        required:true
       }
+      
     }
 )
 

@@ -6,6 +6,9 @@ const User = require("../../Models/User");
 const { dbHandler } = require("../../HelperFuncs/dbHelper");
 const { createToken } = require("../../HelperFuncs/GlobalHelper");
 const { v4: uuidv4 } = require("uuid");
+const { cacheRedis } = require("../../Configs/cacheRedis");
+const {autheticateUserHelper} = require("../../HelperFuncs/authenticate");
+const  mongoose = require("mongoose");
 
 const signInWithGoogle = async (req, res) => {
   try {
@@ -19,7 +22,7 @@ const signInWithGoogle = async (req, res) => {
 
     const { email, name, picture } = userDetails.data;
 
-     await dbHandler(res, async () => {
+      dbHandler(res, async () => {
       const existingUser = await User.findOneAndUpdate(
         {
           email: email,
@@ -40,16 +43,18 @@ const signInWithGoogle = async (req, res) => {
       );
 
       const payload = {
+        tokenId:uuidv4(),
         userId: existingUser._id,
-        role: existingUser.roles,
+        roles: existingUser.roles,
       };
 
       const token = createToken(payload, "30d");
 
-      const sessionData = await Session.create({
-        email: existingUser.email,
+       await Session.create({
         token,
+        userId: new mongoose.Types.ObjectId(existingUser._id)
       });
+
       const user = {
         name:existingUser.name,
         pic:existingUser.pic,
@@ -58,13 +63,14 @@ const signInWithGoogle = async (req, res) => {
      return res.status(200)
             .cookie("sessionToken",token,{
                 httpOnly: true,
-                secure: process.env.PRODUCTION==="true"?true:false, // true in production (HTTPS)
+                secure: process.env.PRODUCTION === "true",   
                 sameSite: "lax",
                 maxAge: 30 * 24 * 60 * 60 * 1000, 
+                path: "/" 
             })
             .json({
                 message:"Logged In",
-                data:user
+                user:user
             })
     });
   } catch (err) {
@@ -74,4 +80,63 @@ const signInWithGoogle = async (req, res) => {
   }
 };
 
-module.exports = { signInWithGoogle };
+const logout = async(req,res)=>{
+  try{
+    const sessionToken = req.cookies.sessionToken;
+    if(sessionToken){
+       const decoded = jwt.verify(sessionToken,process.env.JWT_SECRET);
+       
+       const ttl = decoded.exp - Math.floor(Date.now()/1000);
+       await cacheRedis.set(
+        `tokenBlock:${decoded.tokenId}`,
+        1,
+        {EX:ttl}
+       )
+       
+       res.status(200).clearCookie("sessionToken",{
+         httpOnly: true,
+         secure: process.env.PRODUCTION === "true",  
+         sameSite: "lax",                            
+         path: "/", 
+       }).json({
+          message:"logged out"
+       })
+
+    }
+    else{
+      throw new Error("Logged out already")
+    }
+    
+    }
+    catch(err){
+         res.status(200).clearCookie("sessionToken",{
+         httpOnly: true,
+         secure: process.env.PRODUCTION === "true",  
+         sameSite: "lax",                            
+         path: "/", 
+       }).json({
+          message:"logged out"
+       })
+    }
+  
+
+}
+
+const authenticateUser = async(req,res)=>{
+  try{
+       const roles = req.body.roles;
+       autheticateUserHelper(req,res,roles);
+
+    }
+    catch(err){
+       return res.status(403).json({
+          message:"Roles were not provided",
+          err:err
+        })
+    }
+
+}
+
+
+
+module.exports = { signInWithGoogle ,logout,authenticateUser};

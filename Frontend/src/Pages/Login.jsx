@@ -1,17 +1,18 @@
 import React from "react";
 import { useAuth } from "../Context/AuthProvider";
 import {useGoogleLogin} from '@react-oauth/google'
+import {BrowserRouter as Router,Route, Navigate} from 'react-router-dom';
 import axios from "../Configs/AxiosConfig";
 
 export default function Login() {
-  const { user, loading } = useAuth();
+  const { user, loading,setUser } = useAuth();
 
   const resGoogle = async(authResult)=>{
       try{
          if(authResult["code"]){
              try{
-                const res = axios.get(`/api/user/auth/signInWithGoogle?code=${authResult["code"]}`)
-                console.log(res.data)
+                const res = await axios.get(`/api/auth/signInWithGoogle?code=${authResult["code"]}`)
+                setUser(res.data.user);
              }
              catch(err){
               console.log("oauth err ",err)
@@ -34,7 +35,7 @@ export default function Login() {
      flow:'auth-code'
   })
 
-console.log(user)
+//console.log(user)
   if(loading)
     return (
 <div>
@@ -50,12 +51,7 @@ console.log(user)
         </div>
       ):
       (
-        <div>
-            {user.name}
-            {user.role}
-            {user.email}
-          
-        </div>
+        <Navigate to="/" replace /> 
       )
     }
     </div>
