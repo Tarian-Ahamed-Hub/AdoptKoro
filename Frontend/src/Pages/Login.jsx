@@ -28,7 +28,7 @@ export default function Login() {
    
   alert("Cancelled Signing In");
 };
-
+  
   const GoogleLogin = useGoogleLogin({
      onSuccess:resGoogle,
      onError:handleGoogleError,
@@ -47,11 +47,11 @@ export default function Login() {
     <div>
       {user === null ? (
         <div>
-          <button onClick={GoogleLogin}>Login with google</button>
+          <button onClick={(e)=>GoogleLogin()}>Login with google</button>
         </div>
       ):
       (
-        <Navigate to="/" replace /> 
+        <Navigate to="/feed" replace /> 
       )
     }
     </div>

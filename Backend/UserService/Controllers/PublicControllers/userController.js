@@ -9,6 +9,8 @@ const { v4: uuidv4 } = require("uuid");
 const { cacheRedis, getRedisClient } = require("../../Configs/cacheRedis");
 const {autheticateUserHelper} = require("../../HelperFuncs/authenticate");
 const  mongoose = require("mongoose");
+const { getKafkaProducer } = require("../../../PostService/Kafka/KafkaProducer");
+ const { CompressionTypes } = require("kafkajs");
 
 const signInWithGoogle = async (req, res) => {
   try {
@@ -23,6 +25,7 @@ const signInWithGoogle = async (req, res) => {
     const { email, name, picture } = userDetails.data;
 
       dbHandler(res, async () => {
+      const userExists = await User.findOne({ email });
       const existingUser = await User.findOneAndUpdate(
         {
           email: email,
@@ -60,6 +63,40 @@ const signInWithGoogle = async (req, res) => {
         pic:existingUser.pic,
         roles:existingUser.roles   
       }
+
+       
+  
+      if(!userExists){
+         const producer = getKafkaProducer();
+           
+        const Kafka_User = {
+            userId:existingUser._id,
+            name:existingUser.name,
+            pic:existingUser.pic,
+            address:existingUser.address,
+            roles:existingUser.roles,
+            email:existingUser.email,
+            phone:existingUser.phone,
+            verified:existingUser.verified,
+         }
+         await producer.send({
+          topic: "registration",  
+          compression: CompressionTypes.GZIP, 
+          messages: [
+            {
+              key: "partition-1",  
+              value: JSON.stringify(Kafka_User),  
+            },
+          ],
+        });
+
+         console.log(`Registered : ${existingUser.email}`)
+      }
+      else{
+        console.log(`Logged In : ${existingUser.email}`)
+      }
+          
+      
      return res.status(200)
             .cookie("sessionToken",token,{
                 httpOnly: true,

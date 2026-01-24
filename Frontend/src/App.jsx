@@ -10,6 +10,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import UserRoutes from './Private/Routes/UserRoutes'
 import { toast, ToastContainer } from 'react-toastify';
 import UserLayout from './Private/Layouts/UserLayout'
+import Navbar from './Componets/Navbar'
+import FilterProvider from './Context/FilterContext'
 
 function App() {
   
@@ -27,19 +29,18 @@ function App() {
   return (
     <BrowserRouter>
        <AuthProvider>
-           
-          
+           <FilterProvider>
+          <Navbar></Navbar>
+          <div className='ContentContainer'>
           <Routes>
-            <Route path='/' element={<Home/> }/> 
+            <Route path='/feed' element={<Home/> }/> 
           
             <Route path='/login' element={<GoogleAuthWrapper/> }/> 
 
              <Route
             path="/user/*"
             element={
-              <UserRoutes>
-                <UserLayout />
-              </UserRoutes>
+              <UserRoutes/>
             }
           />
 
@@ -47,7 +48,8 @@ function App() {
 
             <Route path='*' element={<PageNotFound/> }/> 
           </Routes>
-
+         </div>
+         </FilterProvider>
       </AuthProvider>
     
     </BrowserRouter>

@@ -6,7 +6,7 @@ import UserProfile from '../Pages/UserProfile';
 
 export default function UserLayout() {
   return (
-    <div>
+    <div className='userPanel'>
       <div>User panel</div>
 
        <Routes>

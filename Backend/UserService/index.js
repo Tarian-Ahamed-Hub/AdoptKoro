@@ -13,8 +13,10 @@ const { publicRoute } = require("./Routes/PublicRoutes/userRoutes");
 const http = require("http")
 
 
-const {connectRedis,shutdownRedis} = require("./Configs/cacheRedis")
+const {connectRedis,shutdownRedis} = require("./Configs/cacheRedis");
+const { connectKafkaProducer, getKafkaProducer } = require("../PostService/Kafka/KafkaProducer");
 connectRedis();
+connectKafkaProducer();
 
 app.use(cors({
   origin: "http://localhost:5173",  
@@ -32,8 +34,12 @@ appServer.listen(port,()=>{
 
 
 const shutdownServices = async(signal)=>{
-  console.log(`Received ${signal}. Shutting down services`);
-   await shutdownRedis();
+ console.log(`Received ${signal}. Shutting down services`);
+  const kafkaproducer = getKafkaProducer();
+  await kafkaproducer.disconnect()
+  console.log("Producer disconnected")
+  await shutdownRedis();
+  console.log("Redis disconnected")
    process.exit(0);
 }
 

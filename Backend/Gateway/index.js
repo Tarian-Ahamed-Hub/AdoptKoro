@@ -6,7 +6,7 @@ const app = express();
 
 
 app.use('/api/auth', createProxyMiddleware({ target: process.env.USER_SERVICE_URL, changeOrigin: true }));
-// app.use('/posts', createProxyMiddleware({ target: process.env.POST_SERVICE_URL, changeOrigin: true }));
+app.use('/api/post', createProxyMiddleware({ target: process.env.POST_SERVICE_URL, changeOrigin: true }));
 // app.use('/interactions', createProxyMiddleware({ target: process.env.INTERACTION_SERVICE_URL, changeOrigin: true }));
 
 app.get('/', (req, res) => res.send('Pet Adoption API Gateway Running'));

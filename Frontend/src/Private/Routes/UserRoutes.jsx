@@ -8,31 +8,23 @@ export default function UserRoutes({children }) {
    const location = useLocation();
   const [loading,setLoading] = useState(true);
   const [Authenticated, setAuthenticated] = useState(false);
-  const {authenticate} = useAuth();
-//i have the function already - replace
-  const authenticateUser = async()=>{
-     
-    try{
-        const res = await axios.post("/api/auth/authenticate",{
-            roles:["user"]
-        })
-        if(res.status===200){
-         setAuthenticated(true)
-   
-         console.log(res.data)
-        }
-    }
-    catch(err){
-        console.log("LOGGED ERROR ",err.message);
-    }
-    finally{
+  const {authenticateRoles} = useAuth();
+  
+
+  useEffect(()=>{
+    const auth = async()=>{
+        const valid = await authenticateRoles(["user"]);
+        if(valid)
+            setAuthenticated(true)
         setLoading(false)
     }
 
-  }
+     auth();
 
-  useEffect(()=>{
-    authenticateUser();
+    
+
+
+
   },[location]) 
 
   if(loading){
@@ -45,10 +37,10 @@ export default function UserRoutes({children }) {
   return (
     <>
      {Authenticated ===true? (
-         children 
+         <UserLayout /> 
      ):
      (
-         <Navigate to="/" replace /> 
+         <Navigate to="/feed" replace /> 
      )
 
      }

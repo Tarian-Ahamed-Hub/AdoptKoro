@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import axios from "../Configs/AxiosConfig";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -50,7 +50,10 @@ export default function AuthProvider({children}) {
  }
 
    useEffect(() => {
-    authenticate();
+    const user = authenticate();
+    if(!user){
+       history.push("/login")
+    }
   }, []);
 
 
@@ -62,7 +65,7 @@ export default function AuthProvider({children}) {
       console.error(err);
     } finally {
       setUser(null);
-      navigate("/");
+      navigate("/feed");
     }
   };
 
@@ -94,7 +97,7 @@ export default function AuthProvider({children}) {
 
 
   return (
-    <AuthContext.Provider value={{user,setUser,logout,authenticate,loading}}>
+    <AuthContext.Provider value={{user,setUser,logout,authenticate,loading,authenticateRoles}}>
        <ToastContainer
               position="top-left"
               autoClose={900}

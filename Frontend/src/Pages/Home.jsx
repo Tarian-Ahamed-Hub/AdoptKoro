@@ -12,18 +12,8 @@ export default function Home() {
  }
   return (
     <div>
-      <div>This is home</div>
-       { user!==null?(
-        <div>
-          <div>{`Name - ${user.name}`}</div>
-          <Link to={"/user/profile"}>Profile</Link>
-        </div>
-          
-       ):(
-          <Link to={"/login"}>Login</Link>
-       )
-
-       }
+      <div>This is Feed</div>
+     
         
         
     </div>

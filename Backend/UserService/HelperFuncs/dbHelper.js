@@ -13,14 +13,14 @@ module.exports.dbHandler = async (res, fn) => {
       });
     }
 
-    // Invalid ObjectId
+    
     if (err.name === "CastError") {
       return res.status(400).json({
         message: "Invalid ID or field type",
       });
     }
 
-    // Validation error (required, min, max, enum, etc.)
+ 
     if (err.name === "ValidationError") {
       return res.status(400).json({
         message: Object.values(err.errors)
@@ -29,14 +29,13 @@ module.exports.dbHandler = async (res, fn) => {
       });
     }
 
-    // Document not found (custom throw)
+    
     if (err.name === "DocumentNotFoundError") {
       return res.status(404).json({
         message: "Data not found",
       });
     }
-
-    // Mongo server selection / connection timeout
+ 
     if (
       err.name === "MongoServerSelectionError" ||
       err.name === "MongoNetworkError"
@@ -73,7 +72,7 @@ module.exports.dbTransactionHandler = async (res, fn, maxRetries = 5) => {
       if (err.errorLabels?.includes("TransientTransactionError")) {
         attempt++;
         console.warn(
-          `TransientTransactionError, retrying attempt ${attempt}...`
+          `TransientTransactionError, retrying attempt ${attempt}`
         );
         if (attempt === maxRetries) {
           return res.status(503).json({
