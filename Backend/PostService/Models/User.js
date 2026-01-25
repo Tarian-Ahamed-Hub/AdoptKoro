@@ -3,10 +3,11 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema(
   {
     userId:{
-        type:mongoose.Types.ObjectId,
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User",
         required:true,
         index:true
-    },
+      },
     name: {
       type: String,
       required: true,

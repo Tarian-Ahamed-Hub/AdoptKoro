@@ -19,6 +19,7 @@ const userMiddleware = require("./Middlewares/userMiddlewares");
 const { connectKafkaRegistrationSubscriber } = require("./Kafka/KafkaRegistrationConsumer");
 const { publicRoutes } = require("./Routes/PublicRoutes/publicRoutes");
 const { connectKafkaPostSubscriber } = require("./Kafka/KafkaPostConsumer");
+const { Post } = require("./Models/Post");
  
 connectRedis();
 connectKafkaProducer();
@@ -48,6 +49,7 @@ app.use(express.json());
 app.use("/private",userMiddleware,privateRoutes)
 
 app.use("/public",publicRoutes)
+
  
 const port= process.env.POST_SERVICE_PORT;
 

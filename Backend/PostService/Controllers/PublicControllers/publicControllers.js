@@ -71,12 +71,39 @@ const readPostsContentCache = async(cacheKey,startScore)=>{
 
 }
 const getPostsFromDbWithCursor = async(cursor,category)=>{
-    const posts = await Post.find({
-       _id: { $lt: new mongoose.Types.ObjectId(cursor) },
-       category:category     
-     })
-    .sort({ _id: -1 })           
-    .limit(PAGE_LIMIT + 1)
+   const posts = await Post.aggregate([
+  { $match: { category, _id: { $lt: new mongoose.Types.ObjectId(cursor) } } },
+  { $sort: { _id: -1 } },
+  { $limit: PAGE_LIMIT + 1 },
+  {
+    $lookup: {
+      from: "users",
+      localField: "userId",
+      foreignField: "userId",
+      as: "user",
+    },
+  },
+  {
+    $unwind: {
+      path: "$user",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    $project: {
+      title: 1,
+      content: 1,
+      pics: 1,
+      category: 1,
+      district: 1,
+      createdAt: 1,
+      active: 1,
+      "user.name": 1,
+      "user.pic": 1,
+      "user.userId": 1
+    },
+  },
+]);
 
     let cacheCursor = null;
     let dbCursor = null;
@@ -90,10 +117,56 @@ const getPostsFromDbWithCursor = async(cursor,category)=>{
 
 }
 const cacheLatestPosts = async(cachekey,category)=>{
-    const posts =  await Post.find({category})
-    .sort({ _id: -1 })
-    .limit(CACHE_SIZE)
+   //  const posts =  await Post.find({category})
+   //  .sort({ _id: -1 })
+   //  .limit(CACHE_SIZE)
+
+   const posts = await Post.aggregate([
+    { 
+      $match: { category } 
+    },
+    { 
+      $sort: { _id: -1 } 
+    },
+    { 
+      $limit: CACHE_SIZE 
+    },
+    {
+      $lookup: {
+        from: "users",      
+        localField: "userId",  
+        foreignField: "userId", 
+        as: "user",
+      },
+    },
   
+  
+    {
+      $unwind: {
+        path: "$user",
+        preserveNullAndEmptyArrays: true 
+      }
+    },
+  
+    
+    {
+      $project: {
+        title: 1,
+        content: 1,
+        pics: 1,
+        category: 1,
+        district: 1,
+        createdAt: 1,
+        active: 1,
+        "user.name": 1,
+        "user.pic": 1,
+        "user.userId":1
+      },
+    },
+  ]);
+   
+     
+    
     
     if(posts.length){
        const redisCache = getRedisClient()

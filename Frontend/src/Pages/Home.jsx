@@ -1,6 +1,7 @@
 import React from 'react'
 import { useAuth } from '../Context/AuthProvider'
 import {Routes,Route,Link} from "react-router-dom"
+import PostList from '../Componets/PostList';
 
 export default function Home() {
  const {user,loading} = useAuth();
@@ -12,7 +13,7 @@ export default function Home() {
  }
   return (
     <div>
-      <div>This is Feed</div>
+      <PostList/>
      
         
         

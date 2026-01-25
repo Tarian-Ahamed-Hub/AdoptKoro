@@ -49,6 +49,8 @@ const signInWithGoogle = async (req, res) => {
         tokenId:uuidv4(),
         userId: existingUser._id,
         roles: existingUser.roles,
+        userName:existingUser.name,
+        pic:existingUser.pic
       };
 
       const token = createToken(payload, "30d");

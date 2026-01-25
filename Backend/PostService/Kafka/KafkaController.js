@@ -14,6 +14,7 @@ const addUsers = async(users)=>{
             filter:{email:user.email},
             update:{
                 $setOnInsert:{
+                    userId:user.userId,
                     name:user.name,
                     pic:user.pic,
                     address:user.address,
