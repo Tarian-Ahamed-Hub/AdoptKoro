@@ -17,9 +17,12 @@ const {connectRedis,shutdownRedis} = require("./Configs/cacheRedis");
 const { getKafkaProducer, connectKafkaProducer } = require("./Kafka/KafkaProducer");
  
 const { connectKafkaRegistrationSubscriber } = require("./Kafka/KafkaRegistrationConsumer");
+const { initSocketIO } = require("./Socket/initSocket");
+const userMiddleware = require("./Middlewares/userMiddlewares");
+const { messageRoutes } = require("./Routes/PrivateRoutes/messageRoutes");
  
  
-// connectRedis();
+connectRedis();
 connectKafkaProducer();
 connectKafkaRegistrationSubscriber()
 // connectKafkaPostSubscriber()
@@ -44,6 +47,7 @@ app.use(cors(corsOptions))
 app.use(cookieParser());
 app.use(express.json());
  
+app.use("/message",userMiddleware,messageRoutes)
 
 app.get("/test",async(req,res)=>{
   return res.status(200).json({
@@ -55,7 +59,9 @@ app.get("/test",async(req,res)=>{
  
 const port= process.env.INTERACTION_SERVICE_PORT;
 
-const appServer = http.createServer(app)
+const appServer = http.createServer(app);
+initSocketIO(appServer)
+
 appServer.listen(port,()=>{
     console.log("Interactin-service running on port ",port);
 })

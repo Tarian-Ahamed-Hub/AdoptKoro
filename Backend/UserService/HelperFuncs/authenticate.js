@@ -37,6 +37,7 @@ try {
     const userData = await Session.findOne({token:sessionToken}).populate("userId")
  
     const user = {
+      userId:userData.userId._id,
       name:userData.userId.name,
       pic:userData.userId.pic,
       roles:userData.userId.roles 

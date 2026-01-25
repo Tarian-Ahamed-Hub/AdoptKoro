@@ -63,7 +63,8 @@ const signInWithGoogle = async (req, res) => {
       const user = {
         name:existingUser.name,
         pic:existingUser.pic,
-        roles:existingUser.roles   
+        roles:existingUser.roles,
+        userId:existingUser._id   
       }
 
        

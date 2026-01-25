@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
  
 import './App.css'
 import {BrowserRouter,Route,Routes,Navigate} from 'react-router-dom'
@@ -12,8 +12,18 @@ import { toast, ToastContainer } from 'react-toastify';
 import UserLayout from './Private/Layouts/UserLayout'
 import Navbar from './Componets/Navbar'
 import FilterProvider from './Context/FilterContext'
+import { socket } from './Configs/Socket'
 
 function App() {
+
+
+   useEffect(() => {
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   
   const GoogleAuthWrapper = ()=>{
     const clientId = import.meta.env.VITE_OAUTH_CLIENT_ID;

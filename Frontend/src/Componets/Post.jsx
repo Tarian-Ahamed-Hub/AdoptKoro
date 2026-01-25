@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { socket } from '../Configs/Socket';
+import axios from '../Configs/AxiosConfig';
+import { toast } from 'react-toastify';
  
 
 const Post = ({ post }) => {
@@ -17,11 +20,26 @@ const Post = ({ post }) => {
     );
   };
 
-  const handleSend = () => {
-    // Function to handle send action
-    console.log('Send clicked for post:', post._id, 'with input:', inputValue);
-    // Add your logic here
-  };
+  const handleSend = async(post) => {
+     
+      const data = {
+       receiverId:post.user.userId,
+       postId:post._id,
+       postTitle:"This is chat",
+       text:inputValue
+      }
+      //  console.log(data)
+      // return
+      try{
+     const response = await axios.post("/api/interaction/message/sendText",data)
+     toast.success(response.data.message)
+    }
+      catch(err){
+        console.log(err.message)
+      }
+     
+      
+    };
 
   return (
     <div className="post-card">
@@ -83,7 +101,7 @@ const Post = ({ post }) => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
-        <button className="post-send-btn" onClick={handleSend}>
+        <button className="post-send-btn" onClick={(e)=>handleSend(post)}>
           Send
         </button>
       </div>

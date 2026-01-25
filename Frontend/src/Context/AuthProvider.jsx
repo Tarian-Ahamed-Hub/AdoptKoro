@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import axios from "../Configs/AxiosConfig";
 import { toast, ToastContainer } from "react-toastify";
+import { socket } from "../Configs/Socket";
 
 const AuthContext = createContext(null);
 
@@ -21,6 +22,10 @@ export default function AuthProvider({children}) {
         const res =  await axios.post( "/api/auth/authenticate",data);
         setUser(res.data.user);
         console.log(res.data.user)
+          if (!socket.connected) {
+      
+            socket.connect();
+          }
         return res.data;
     }
     catch(err){
@@ -60,6 +65,8 @@ export default function AuthProvider({children}) {
   const logout = async () => {
     try {
      await axios.get("/api/auth/logout", { skipAuthInterceptor: true });
+     if(socket.connected)
+     socket.disconnect();
        
     } catch (err) {
       console.error(err);

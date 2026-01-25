@@ -3,6 +3,7 @@ import { useAuth } from "../Context/AuthProvider";
 import {useGoogleLogin} from '@react-oauth/google'
 import {BrowserRouter as Router,Route, Navigate} from 'react-router-dom';
 import axios from "../Configs/AxiosConfig";
+import { socket } from "../Configs/Socket";
 
 export default function Login() {
   const { user, loading,setUser } = useAuth();
@@ -13,6 +14,9 @@ export default function Login() {
              try{
                 const res = await axios.get(`/api/auth/signInWithGoogle?code=${authResult["code"]}`)
                 setUser(res.data.user);
+                 if (!socket.connected) {
+                  socket.connect();
+                }
              }
              catch(err){
               console.log("oauth err ",err)

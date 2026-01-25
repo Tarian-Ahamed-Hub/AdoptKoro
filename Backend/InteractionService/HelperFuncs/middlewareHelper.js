@@ -30,7 +30,7 @@ try {
      })
      }
   }
-  req.user = {userId:decoded.userId}
+  req.user = {userId:decoded.userId,userName:decoded.userName,pic:decoded.pic}
   
 
   next();
