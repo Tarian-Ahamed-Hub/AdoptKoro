@@ -280,4 +280,37 @@ catch(err){
 
 
 }
-module.exports = {getCategoriesAndDistricts,getLatestPostsByCategory}
+
+const getPost = async(req,res)=>{
+  // try{
+  
+      dbHandler(res,async()=>{
+        console.log("Getting post")
+         const {postId} = req.body;
+         
+        
+        const postData = await Post.findOne({_id:postId})
+        if(!postData){
+          return res.status(404).json({
+           message:"post doesnt exist"
+        })
+        }
+          return res.status(200).json({
+           post:postData,
+           message:"post exists"
+        })
+     
+        
+     
+
+    })
+   
+  // }
+  // catch(err){
+  //    return res.status(500).json({
+  //      message:err.message
+  //    })
+  // }
+   
+}
+module.exports = {getCategoriesAndDistricts,getLatestPostsByCategory,getPost}

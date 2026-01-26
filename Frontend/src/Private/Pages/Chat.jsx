@@ -3,28 +3,27 @@ import { socket } from '../../Configs/Socket';
 import axios from '../../Configs/AxiosConfig';
 import { useAuth } from '../../Context/AuthProvider';
 import { toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
 
 const Chat = () => {
-  const [message, setMessage] = useState('');
-  const [conversationId, setConversationId] = useState('');
+  
+   
   const [inputValue, setInputValue] = useState('');
+  const [conversationDetails, setConversationDetails] = useState(null);
   const {user} = useAuth();
+   const { conversationId } = useParams();
 
   useEffect(() => {
    
     if (!user) return;
 
-    const pathParts = window.location.pathname.split('/');
-    const id = pathParts[pathParts.length - 1];
-    setConversationId(id);
-    console.log(id);
-
-    socket.emit("join_room",{roomId:id})
+    socket.emit("join_room",{roomId:conversationId})
 
     socket.on("receive_text_convo",(data)=>{
-      if(data.message.sender.userId===user.userId){
+      if(data.userId===user.userId){
+
        // console.log("You sent text")
-         data.message.sender.userId = "current"
+         data.userId = "current"
       }
         
       console.log(data)
@@ -33,47 +32,61 @@ const Chat = () => {
       })
     })
 
+    // Fetch conversation details
+    const fetchConversation = async () => {
+      try {
+        const response = await axios.post('/api/interaction/message/getText', {
+          conversationId
+        });
+        setConversationDetails(response.data.conversationDetails);
+        setConversation(response.data.chats);
+        console.log('Conversation loaded:', response.data);
+      } catch (err) {
+        console.error('Error fetching conversation:', err.message);
+        toast.error('Failed to load conversation');
+      }
+    };
+
+    fetchConversation();
+
+     return () => {
+        socket.emit("leave_room", conversationId);
+      };
+
   }, [user]);
 
   const [conversation,setConversation] = useState( [])
 
   // {
-  //     message: {
-  //       sender: {
+  //   
+  //         
   //         userId: 'current',
   //         name: 'You',
   //         pic: 'https://api.dicebear.com/7.x/avataaars/svg?seed=You'
-  //       },
+  // 
   //       text: 'Sure, how about 3 PM?',
-  //       timestamp: new Date('2026-01-25T10:33:00'),
+  //       createdAt: new Date('2026-01-25T10:33:00'),
   //       seen: false
-  //     }
+  //   
   //   }
   
  
 
   const handleSend = async() => {
-     const extractDetails =(id)=>{
-      const arr = id.split("-");
-      const postId = arr[0];
-      const receiverId = arr[1]===user.userId?arr[2]:arr[1];
-      return {postId,receiverId}
-
-     }
-     const {postId,receiverId} = extractDetails(conversationId)
-
      const data = {
-       receiverId:receiverId,
-       postId:postId,
-       postTitle:"This is chat",
-       text:inputValue
+       conversationId,
+       receiverId: null,
+       postId: conversationDetails?.postId || null,
+       text: inputValue
       }
      try{
      const response = await axios.post("/api/interaction/message/sendText",data)
-     toast.success(response.data.message)
+   //  toast.success(response.data.message)
+     setInputValue('');
     }
       catch(err){
         console.log(err.message)
+        toast.error('Failed to send message');
       }
 
   };
@@ -87,14 +100,14 @@ const Chat = () => {
           className="chat-header-avatar"
         />
         <div className="chat-header-info">
-          <h3>John Doe</h3>
+          <h3>{conversationDetails?.conversationName || 'Loading...'}</h3>
           <span className="chat-online-status">Online</span>
         </div>
       </div>
       
       <div className="chat-messages-container">
         {conversation.map((item, index) => {
-          const isCurrentUser = item.message.sender.userId === 'current';
+          const isCurrentUser = item.userId === user?.userId || item.userId === 'current';
           return (
             <div
               key={index}
@@ -102,18 +115,18 @@ const Chat = () => {
             >
               {!isCurrentUser && (
                 <img
-                  src={item.message.sender.pic}
-                  alt={item.message.sender.name}
+                  src={item.pic}
+                  alt={item.name}
                   className="chat-message-avatar"
                 />
               )}
               <div className="chat-message-content">
                 <div className={`chat-message-bubble ${isCurrentUser ? 'sent-bubble' : 'received-bubble'}`}>
-                  <p className="chat-message-text">{item.message.text}</p>
+                  <p className="chat-message-text">{item.text}</p>
                 </div>
                 <div className="chat-message-meta">
                   {isCurrentUser && (
-                    <span className="chat-message-status">{item.message.seen ? '✓✓' : '✓'}</span>
+                    <span className="chat-message-status">{item.seen ? '✓✓' : '✓'}</span>
                   )}
                 </div>
               </div>

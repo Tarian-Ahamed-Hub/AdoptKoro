@@ -15,7 +15,14 @@ export default function Login() {
                 const res = await axios.get(`/api/auth/signInWithGoogle?code=${authResult["code"]}`)
                 setUser(res.data.user);
                  if (!socket.connected) {
-                  socket.connect();
+                    socket.connect();
+                    function joinRoom(roomId) {
+                    const data = { roomId };
+                    console.log("join_room", data);
+                    socket.emit("join_room", data);
+                  }
+                  console.log("Login:Trying to join room ")
+                joinRoom(res.data.user.userId);
                 }
              }
              catch(err){

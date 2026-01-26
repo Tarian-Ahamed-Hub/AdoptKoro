@@ -25,7 +25,6 @@ const Post = ({ post }) => {
       const data = {
        receiverId:post.user.userId,
        postId:post._id,
-       postTitle:"This is chat",
        text:inputValue
       }
       //  console.log(data)

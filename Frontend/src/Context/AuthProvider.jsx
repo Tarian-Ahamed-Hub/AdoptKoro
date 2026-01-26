@@ -23,19 +23,43 @@ export default function AuthProvider({children}) {
         setUser(res.data.user);
         console.log(res.data.user)
           if (!socket.connected) {
-      
             socket.connect();
+             function joinRoom(roomId) {
+            const data = { roomId };
+            console.log("join_room", data);
+            socket.emit("join_room", data);
+          }
+          console.log("Authenticate:Trying to join room ")
+        joinRoom(res.data.user.userId);
+
           }
         return res.data;
     }
     catch(err){
+
       setUser(null);
+      navigate("/login");
       return null;
     }
     finally{
         setLoading(false)
     }
  }
+
+useEffect(() => {
+  if (!user?.userId) return;
+
+  
+  const handleReceiveText = (data) => {
+    console.log("Received text global", data);
+  };
+  socket.on("receive_text", handleReceiveText);
+
+ 
+  return () => {
+    socket.off("receive_text", handleReceiveText);
+  };
+}, [user?.userId]);
 
 
 
@@ -55,10 +79,8 @@ export default function AuthProvider({children}) {
  }
 
    useEffect(() => {
-    const user = authenticate();
-    if(!user){
-       history.push("/login")
-    }
+    authenticate();
+     
   }, []);
 
 
@@ -77,31 +99,34 @@ export default function AuthProvider({children}) {
   };
 
 
-  axios.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-  
-    if (error.response) {
-    
-      const status = error.response.status;
+  useEffect(() => {
+  const interceptorId = axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response) {
+        const status = error.response.status;
 
-       if (error.config && error.config.skipAuthInterceptor) {
-        return Promise.reject(error);
+        if (error.config?.skipAuthInterceptor) {
+          return Promise.reject(error);
+        }
+
+        if (status === 401) {
+          logout();
+        } else if (status === 403) {
+          toast.error("Not Authorised");
+        }
       }
 
-      if (status === 401) {
-       logout();
-      } else if (status === 403) {
-       toast.error("Not Authorised")
-      }
+      return Promise.reject(error);
     }
+  );
 
-    return Promise.reject(error);
-  }
-);
+  return () => {
+    axios.interceptors.response.eject(interceptorId);
+  };
+}, []);
 
+ 
 
   return (
     <AuthContext.Provider value={{user,setUser,logout,authenticate,loading,authenticateRoles}}>

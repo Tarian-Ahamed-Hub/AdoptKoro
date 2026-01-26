@@ -36,6 +36,16 @@ function setupSocketEvents(io) {
        socket.join(`room:${data.roomId}`)
        console.log(socket.user.userName,`(${socket.user.userId})`," joined room ",data.roomId)
     })
+
+     socket.on("leave_room", (roomId) => {
+        socket.leave(roomId);
+        console.log(`${socket.id} left ${roomId}`);
+      });
+
+       socket.on("disconnect", () => {
+        console.log("user left : ", socket.id);
+  
+        });
     
   });
   
