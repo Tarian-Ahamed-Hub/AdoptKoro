@@ -31,7 +31,9 @@ const chatList = async(req,res)=>{
             lastMessage: { $arrayElemAt: ["$messages", -1] }  
           }
         },
-        
+        {
+          $sort:{"lastMessage.createdAt":-1}
+        },
         {
           $project: {
             conversationId: 1,
@@ -73,10 +75,24 @@ const chatList = async(req,res)=>{
         });
       }
       const chatData = await Chat.find({conversationId})
+      const seenData = await Chat.updateMany(
+        {
+          conversationId,
+          userId:{$ne:sender.userId},
+          seen:false
+         },
+         {
+          $set:{
+            seen:true
+          }
+         }
+      )
+
       return res.status(200).json({
             conversationDetails:existingConvo,
             chats:chatData,
             message: "fetched message",
+            seenCount:seenData.modifiedCount
         });
 
  }
@@ -212,4 +228,60 @@ let chatData = {
     });
   }
 };
-module.exports = { sendText ,conversationDetails,chatList};
+
+const getUnseenCount = async(req,res)=>{
+    const user = req.user;
+
+    dbHandler(res,async()=>{
+         const unseenCount = await Conversation.aggregate([
+           {
+            $match:{
+               members:new mongoose.Types.ObjectId(user.userId)
+               
+            }
+           },
+            {
+              $lookup: {
+                from: "chats",
+                let: { convId: "$conversationId" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$conversationId", "$$convId"] },
+                          { $eq: ["$seen", false] },
+                          { $ne: ["$userId", user.userId] }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                as: "unseenChats"
+              }
+            },
+             {
+              $addFields: {
+                count: { $size: "$unseenChats" }
+              }
+            },
+            { $unwind: "$unseenChats" },
+             { $count: "totalUnseen" }
+
+
+         ])
+         console.log(unseenCount)
+         let unseen = 0;
+         if(unseenCount.length){
+            unseen = unseenCount[0].totalUnseen
+         }
+        return res.status(200).json({
+          message:"Got unseen count",
+           unseenCount:unseen
+        })
+         
+    })
+
+    
+}
+module.exports = { sendText ,conversationDetails,chatList,getUnseenCount};

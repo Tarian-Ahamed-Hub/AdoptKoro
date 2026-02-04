@@ -70,9 +70,20 @@ const readPostsContentCache = async(cacheKey,startScore)=>{
    return {posts:rawContents,cacheCursor,dbCursor};
 
 }
-const getPostsFromDbWithCursor = async(cursor,category)=>{
+const getPostsFromDbWithCursor = async(cursor,category,location)=>{
+   const matchStage = {
+    category,
+    active: true,
+    _id: { $lt: new mongoose.Types.ObjectId(cursor) },
+  };
+
+  if (location !== "All") {
+    matchStage.district = location;
+  }
+
+
    const posts = await Post.aggregate([
-  { $match: { category, _id: { $lt: new mongoose.Types.ObjectId(cursor) } } },
+  { $match: matchStage },
   { $sort: { _id: -1 } },
   { $limit: PAGE_LIMIT + 1 },
   {
@@ -116,14 +127,21 @@ const getPostsFromDbWithCursor = async(cursor,category)=>{
     return {posts:posts,cacheCursor,dbCursor}
 
 }
-const cacheLatestPosts = async(cachekey,category)=>{
+const cacheLatestPosts = async(cachekey,category,location)=>{
    //  const posts =  await Post.find({category})
    //  .sort({ _id: -1 })
    //  .limit(CACHE_SIZE)
-
+   let matchStage = {
+    category,
+    active:true
+   }
+   if(location!=="All"){
+    matchStage.district = location
+   }
+   
    const posts = await Post.aggregate([
     { 
-      $match: { category } 
+      $match: matchStage 
     },
     { 
       $sort: { _id: -1 } 
@@ -194,14 +212,17 @@ const getLatestPostsByCategory = async(req,res)=>{
     
 
 
-    const {category} = req.params;
+    const {category,location} = req.params;
+    // const {location} = req.params;
+
     const {currentCacheCursor,currentDbCursor} = req.body;
     let startScore = currentCacheCursor;
     if(startScore!=="+inf" && startScore){
        startScore = BigInt(`0x${currentCacheCursor.toString()}`).toString();
    }
     
-    const cacheKey = `posts:latest:${category}`;
+    //const cacheKey = `posts:latest:${category}`;
+    const cacheKey = `posts:latest:${category}:${location}`;
     const redis = getRedisClient();
     const CacheExists = await redis.exists(cacheKey)
 
@@ -223,7 +244,7 @@ const getLatestPostsByCategory = async(req,res)=>{
          console.log("Cache  exausted ")
          if(currentDbCursor!==null) {//db posts not exausted
             console.log("DB not exausted ")
-           const dbPostsResponse = await getPostsFromDbWithCursor(currentDbCursor,category)
+           const dbPostsResponse = await getPostsFromDbWithCursor(currentDbCursor,category,location)
            res_posts = dbPostsResponse.posts;
            res_cacheCursor = dbPostsResponse.cacheCursor;
            res_dbCursor = dbPostsResponse.dbCursor
@@ -235,7 +256,7 @@ const getLatestPostsByCategory = async(req,res)=>{
       console.log("Cache doesnt exist ")
       if(currentCacheCursor==="+inf"){//if fist page build cache
           console.log("first page buildin cache ")
-       const built = await cacheLatestPosts(cacheKey,category);
+       const built = await cacheLatestPosts(cacheKey,category,location);
        if(built){
           console.log("cache built getting from cache ")
          const cacheResponse = await readPostsContentCache(cacheKey,startScore);
@@ -249,7 +270,7 @@ const getLatestPostsByCategory = async(req,res)=>{
       }
       else{//hit db
           console.log("not first page and no cache. DB is hit ")
-           const dbPostsResponse = await getPostsFromDbWithCursor(currentDbCursor,category)
+           const dbPostsResponse = await getPostsFromDbWithCursor(currentDbCursor,category,location)
            res_posts = dbPostsResponse.posts;
            res_cacheCursor = dbPostsResponse.cacheCursor;
            res_dbCursor = dbPostsResponse.dbCursor

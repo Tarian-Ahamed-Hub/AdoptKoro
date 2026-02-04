@@ -1,10 +1,36 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../Context/AuthProvider';
 import NewPostForm from '../../Componets/NewPostForm';
+import PostList from '../../Componets/PostList';
+import axios from '../../Configs/AxiosConfig';
 
 export default function UserProfile() {
  const {user,loading,logout} = useAuth();
- console.log(user)
+ //console.log(user)
+
+ const [posts, setPosts] = useState([]);
+    const [postLoading, setPostLoading] = useState(true);
+
+
+    useEffect(() => {
+    const fetchPosts = async () => {
+        
+      try {
+        const response = await axios.get(
+          '/api/post/private/getUserPosts' 
+        );
+        setPosts(response.data.posts);
+        
+        setPostLoading(false);
+      } catch (err) {
+      
+        setPostLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [user]);
+
  
  if(loading){
     return (
@@ -19,7 +45,7 @@ export default function UserProfile() {
           <img className="profile-pic" src={user?.pic} alt="user profile pic" />
           <div className="profile-info">
             <h2 className="profile-name">{user?.name}</h2>
-            <span className="profile-label">See your profile</span>
+           
           </div>
         </div>
         
@@ -36,6 +62,8 @@ export default function UserProfile() {
     </div>
 
     <NewPostForm></NewPostForm>
+
+    <PostList posts = {posts} loading={postLoading} setPosts={setPosts}></PostList>
     </>
   )
 }

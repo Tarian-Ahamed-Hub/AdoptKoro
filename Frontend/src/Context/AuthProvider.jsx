@@ -11,6 +11,7 @@ export default function AuthProvider({children}) {
 
  const [user,setUser] = useState(null);
  const [loading,setLoading] = useState(true);
+ const [unreadMessageCount,setUnreadMessageCount] = useState(0)
 
  const navigate = useNavigate();
 
@@ -33,6 +34,9 @@ export default function AuthProvider({children}) {
         joinRoom(res.data.user.userId);
 
           }
+         
+    
+
         return res.data;
     }
     catch(err){
@@ -48,10 +52,15 @@ export default function AuthProvider({children}) {
 
 useEffect(() => {
   if (!user?.userId) return;
-
+  const getCount = async()=>{
+        const messageCount = await axios.get("/api/interaction/message/messageCount")
+        setUnreadMessageCount(messageCount.data.unseenCount);
+  }
+   getCount()
   
   const handleReceiveText = (data) => {
-    console.log("Received text global", data);
+    if(data.lastMessage.userId!==user.userId)
+    setUnreadMessageCount(prev=>prev+1);
   };
   socket.on("receive_text", handleReceiveText);
 
@@ -129,7 +138,7 @@ useEffect(() => {
  
 
   return (
-    <AuthContext.Provider value={{user,setUser,logout,authenticate,loading,authenticateRoles}}>
+    <AuthContext.Provider value={{user,setUser,logout,authenticate,loading,authenticateRoles,setUnreadMessageCount,unreadMessageCount}}>
        <ToastContainer
               position="top-left"
               autoClose={900}

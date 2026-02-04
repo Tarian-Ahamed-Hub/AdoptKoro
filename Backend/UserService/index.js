@@ -17,9 +17,11 @@ const {connectRedis,shutdownRedis} = require("./Configs/cacheRedis");
 const { connectKafkaProducer, getKafkaProducer } = require("../PostService/Kafka/KafkaProducer");
 connectRedis();
 connectKafkaProducer();
-
+ 
+const frontend_url = process.env.FRONTEND_URL;
+const gateway_url = process.env.GATEWAY_SERVICE_URL;
 app.use(cors({
-  origin: "http://localhost:5173",  
+  origin: [frontend_url,gateway_url],  
   credentials: true,                
 }));
  

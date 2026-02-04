@@ -11,6 +11,15 @@ export default function FilterProvider({children}) {
  const [categories,setCategories] = useState([]);
   const [districts,setDistricts] = useState([]);
  const [loading,setLoading] = useState(true);
+ const [currentDistrict,setCurrentDistrict] = useState({
+            district: "Dhaka",
+            latitude: 23.7115,
+            longitude: 90.4111,
+        });
+
+  const [currentCategory,setCurrentCategory] = useState(  {
+            name: "Cat",
+        });
 
  const navigate = useNavigate();
 
@@ -39,7 +48,7 @@ export default function FilterProvider({children}) {
 
 
   return (
-    <FilterContext.Provider value={{categories,districts}}>
+    <FilterContext.Provider value={{categories,districts,currentDistrict,currentCategory,setCurrentDistrict,setCurrentCategory}}>
       
         {children}
     </FilterContext.Provider>

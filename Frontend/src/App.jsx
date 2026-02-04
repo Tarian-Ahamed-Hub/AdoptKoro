@@ -3,16 +3,17 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import {BrowserRouter,Route,Routes,Navigate} from 'react-router-dom'
 import Login from './Pages/Login'
-import Home from './Pages/Home'
+ 
 import AuthProvider from './Context/AuthProvider'
 import PageNotFound from './Pages/PageNotFound'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import UserRoutes from './Private/Routes/UserRoutes'
-import { toast, ToastContainer } from 'react-toastify';
-import UserLayout from './Private/Layouts/UserLayout'
+ 
+ 
 import Navbar from './Componets/Navbar'
 import FilterProvider from './Context/FilterContext'
 import { socket } from './Configs/Socket'
+import FeedWrapper from './Componets/FeedWrapper'
 
 function App() {
 
@@ -42,8 +43,10 @@ function App() {
            <FilterProvider>
           <Navbar></Navbar>
           <div className='ContentContainer'>
+            
           <Routes>
-            <Route path='/feed' element={<Home/> }/> 
+             <Route path="/" element={<Navigate to="/feed/latest/Cat/Dhaka" replace />} />
+            <Route path='/feed/*' element={<FeedWrapper/> }/> 
           
             <Route path='/login' element={<GoogleAuthWrapper/> }/> 
 

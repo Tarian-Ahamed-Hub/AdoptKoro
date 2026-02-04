@@ -26,14 +26,10 @@ connectRedis();
 connectKafkaProducer();
 connectKafkaRegistrationSubscriber()
 // connectKafkaPostSubscriber()
-
+const frontend_url = process.env.FRONTEND_URL;
+const gateway_url = process.env.GATEWAY_SERVICE_URL;
 const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:8000",
-    "http://localhost:8001",
-    "http://localhost:8002"
-  ],
+  origin: [frontend_url,gateway_url ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: [
