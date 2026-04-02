@@ -31,7 +31,7 @@ const addUsers = async(users)=>{
     )
 
     const result = await User.bulkWrite(operations);
-    console.log("Users added to post service")
+    console.log(users.length," Users added to post service")
     }
     catch(err){
         console.log("Failed to add Users to post service ",err.message)

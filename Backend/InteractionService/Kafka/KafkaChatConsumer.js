@@ -1,25 +1,26 @@
 
-const { addPosts } = require("./KafkaController")
-const { KafkaRedpanda } = require("./KafkaInstance")
  
+const { addChat } = require("../Controllers/privateControllers/messageController")
+const { KafkaRedpanda } = require("./KafkaInstance")
 
 
-const kafkaPostConsumer = KafkaRedpanda.consumer(
+
+const kafkaChatConsumer = KafkaRedpanda.consumer(
     {
-    groupId: "post-service-group",
+    groupId: "chat-service-group",
     maxBytesPerPartition: 10 *1024 * 1024,
     }
 )
-const connectKafkaPostSubscriber = async () => {
+const connectKafkaChatSubscriber = async () => {
 try{
-     await kafkaPostConsumer.connect()
+     await kafkaChatConsumer.connect()
       console.log("Kafka Post Consumer Connected")
-  await kafkaPostConsumer.subscribe({
-    topic: "posts",
+  await kafkaChatConsumer.subscribe({
+    topic: "chat",
     fromBeginning: true
   })
 
-    await kafkaPostConsumer.run({
+    await kafkaChatConsumer.run({
       eachBatchAutoResolve: false,
       eachBatch: async ({ batch, resolveOffset, heartbeat, commitOffsetsIfNecessary }) => {
         const batchArray = [];
@@ -32,16 +33,15 @@ try{
           try {
             const data = JSON.parse(message.value.toString()); 
             batchArray.push(data); 
+            resolveOffset(message.offset);
           } catch (err) {
             console.error("Invalid message JSON:", message.value.toString());
           }
-
-          resolveOffset(message.offset);
           processed++;
         }
        // console.log(batchArray);
         if (batchArray.length > 0) {
-           addPosts(batchArray);
+           addChat(batchArray);
         }
         
 
@@ -60,4 +60,4 @@ catch(err){
 }
 
  
-module.exports = {connectKafkaPostSubscriber}
+module.exports = {connectKafkaChatSubscriber}

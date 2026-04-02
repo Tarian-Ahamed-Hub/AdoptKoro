@@ -10,15 +10,22 @@ const kafkaPostConsumer = KafkaRedpanda.consumer(
     maxBytesPerPartition: 10 *1024 * 1024,
     }
 )
+// const kafkaPostConsumer = KafkaRedpanda.consumer({
+//    groupId:"id",
+//    maxBytesPerPartition:10*1024*1024 //10 mb
+// })
+
 const connectKafkaPostSubscriber = async () => {
 try{
      await kafkaPostConsumer.connect()
       console.log("Kafka Post Consumer Connected")
-  await kafkaPostConsumer.subscribe({
-    topic: "posts",
-    fromBeginning: true
-  })
 
+      await kafkaPostConsumer.subscribe({
+        topic: "posts",
+        fromBeginning: true
+      })
+       
+   
     await kafkaPostConsumer.run({
       eachBatchAutoResolve: false,
       eachBatch: async ({ batch, resolveOffset, heartbeat, commitOffsetsIfNecessary }) => {
@@ -50,7 +57,18 @@ try{
       },
     });
 
- 
+  //  await kafkaPostConsumer.run({
+  //   eachBatchAutoResolve:false,
+  //   eachBatch: async({batch,resolveOffset,heartbeat,commitOffsetsIfNecessary})=>{
+  //         //batch.messages contains messages
+  //         //eachMessage.offset is its offset
+  //         //eachMessage.value is the value passed from producer
+  //         //resolveOffset(message.offset)
+  //         //finnaly commitOffsetIfNecessary();
+  //         //await heartbeat() to let kafka know that the consumer is alive
+
+  //   }
+  // })
 
 }
 catch(err){

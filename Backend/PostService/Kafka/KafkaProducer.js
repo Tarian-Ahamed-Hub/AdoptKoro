@@ -1,7 +1,7 @@
 const { KafkaRedpanda } = require("./KafkaInstance");
 
 
-
+ 
 const kafkaProducer = KafkaRedpanda.producer()
 const connectKafkaProducer = async()=>{
     try{
@@ -13,6 +13,7 @@ const connectKafkaProducer = async()=>{
      }
      
 }
+
 
 
 const getKafkaProducer = ()=>{

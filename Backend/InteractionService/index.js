@@ -20,12 +20,15 @@ const { connectKafkaRegistrationSubscriber } = require("./Kafka/KafkaRegistratio
 const { initSocketIO } = require("./Socket/initSocket");
 const userMiddleware = require("./Middlewares/userMiddlewares");
 const { messageRoutes } = require("./Routes/PrivateRoutes/messageRoutes");
+const { connectKafkaChatSubscriber } = require("./Kafka/KafkaChatConsumer");
  
  
 connectRedis();
+
 connectKafkaProducer();
+
 connectKafkaRegistrationSubscriber()
-// connectKafkaPostSubscriber()
+connectKafkaChatSubscriber();
 const frontend_url = process.env.FRONTEND_URL;
 const gateway_url = process.env.GATEWAY_SERVICE_URL;
 const corsOptions = {

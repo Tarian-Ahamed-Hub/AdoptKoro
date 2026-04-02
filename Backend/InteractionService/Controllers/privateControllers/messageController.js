@@ -5,6 +5,9 @@ const axios = require('axios');
 const Chat = require("../../Models/Chat");
 const { default: mongoose } = require("mongoose");
 const { dbHandler } = require("../../../PostService/HelperFuncs/dbHelper");
+ 
+ const { CompressionTypes } = require("kafkajs");
+const { checkStatus, getKafkaProducer } = require("../../Kafka/KafkaProducer");
 
 const chatList = async(req,res)=>{
 
@@ -183,7 +186,23 @@ let chatData = {
 
     }
      
-     await Chat.create(chatData);
+    const producer = getKafkaProducer();
+    console.log(checkStatus())
+  
+    await producer.send({
+      topic:"chat",
+      compression:CompressionTypes.GZIP,
+      messages:[
+        {
+          key:"key",
+          value:JSON.stringify(chatData)
+        }
+      ]
+    })
+    console.log(checkStatus())
+    
+
+   
 
     const io = getSocketIo();
     const data = {
@@ -198,10 +217,7 @@ let chatData = {
           seen: false,  
       },
     };
-  
 
-    
-  
     
       rec_set.forEach(rec => {
         io.to(`room:${rec}`).emit("receive_text", data);
@@ -217,6 +233,7 @@ let chatData = {
       message: "message sent",
     });
   } catch (err) {
+    console.log(checkStatus())
     if(err.response?.status===404){
         return res.status(404).json({
         message: "Post not found",
@@ -284,4 +301,19 @@ const getUnseenCount = async(req,res)=>{
 
     
 }
-module.exports = { sendText ,conversationDetails,chatList,getUnseenCount};
+
+const addChat = async(chats)=>{
+
+   const ops = chats.map(chat=>(
+    {
+       insertOne:{
+        document:chat
+      }
+    }
+   ))
+
+   const ack = await Chat.bulkWrite(ops);
+   console.log("text sent ", ack.insertedCount)
+
+}
+module.exports = { sendText ,conversationDetails,chatList,getUnseenCount,addChat};

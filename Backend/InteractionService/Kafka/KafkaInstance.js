@@ -1,6 +1,7 @@
 const {Kafka} = require("kafkajs")
 
 const KafkaRedpanda = new Kafka({
+  clientId: 'chat-service-prod',
   brokers: [process.env.KAFKA_URL],
   ssl: {},
   sasl: {

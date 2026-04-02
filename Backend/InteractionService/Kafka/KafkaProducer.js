@@ -13,10 +13,22 @@ const connectKafkaProducer = async()=>{
      }
      
 }
+let isProducerAlive = false;
+kafkaProducer.on(kafkaProducer.events.CONNECT, () => {
+    isProducerAlive = true;
+    console.log('Kafka Producer: Connected');
+});
 
+kafkaProducer.on(kafkaProducer.events.DISCONNECT, () => {
+    isProducerAlive = false;
+    console.error('Kafka Producer: Disconnected');
+});
 
 const getKafkaProducer = ()=>{
     return kafkaProducer;
 }
+const checkStatus = ()=>{
+    return isProducerAlive;
+}
 
-module.exports = {getKafkaProducer,connectKafkaProducer}
+module.exports = {getKafkaProducer,connectKafkaProducer,checkStatus}

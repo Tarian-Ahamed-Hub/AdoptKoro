@@ -91,7 +91,10 @@ const signInWithGoogle = async (req, res) => {
               value: JSON.stringify(Kafka_User),  
             },
           ],
-        });
+          });
+ 
+
+       
 
          console.log(`Registered : ${existingUser.email}`)
       }
