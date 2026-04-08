@@ -10,22 +10,92 @@ const Chat = () => {
   const [inputValue, setInputValue] = useState('');
   const [conversationDetails, setConversationDetails] = useState(null);
   const [conversation, setConversation] = useState([]);
+  const [cursor, setCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { user,setUnreadMessageCount } = useAuth();
   const { conversationId } = useParams();
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const loadMoreRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Only scroll to bottom on initial load, NOT on load more or socket events
   useEffect(() => {
-    scrollToBottom();
-  }, [conversation]);
+    // Only scroll on very first load
+    if (isInitialLoad && conversation.length > 0) {
+      scrollToBottom();
+    }
+  }, [isInitialLoad]);
+
+  // Scroll to bottom when new messages arrive via socket (only if at bottom)
+  useEffect(() => {
+    if (!isLoadingMore && conversation.length > 0 && !isInitialLoad) {
+      const container = messagesContainerRef.current;
+      if (!container) return;
+      
+      const isAtBottom = 
+        container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      
+      // Only auto-scroll if user is already at bottom
+      if (isAtBottom) {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 0);
+      }
+    }
+  }, [conversation, isLoadingMore, isInitialLoad]);
+
+  // Handle scroll to detect when user scrolls near top and bottom
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    let scrollTimeout;
+
+    const handleScroll = () => {
+      // Show load more button if scrolled near top and there are more messages
+      if (container.scrollTop < 100 && hasMore && !isLoadingMore && loadMoreRef.current) {
+        loadMoreRef.current.style.display = 'block';
+      } else if (loadMoreRef.current) {
+        loadMoreRef.current.style.display = 'none';
+      }
+
+      // Only update scroll button during user scroll, not during programmatic updates
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      
+      scrollTimeout = setTimeout(() => {
+        // Check if user is at bottom
+        const isAtBottom = 
+          container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+        
+        // Show scroll down button if NOT at bottom (user manually scrolled up)
+        setShowScrollButton(!isAtBottom && !isLoadingMore);
+      }, 100);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+    };
+  }, [hasMore, isLoadingMore]);
+
+  const handleScrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     if (!user) return;
 
     socket.emit("join_room", { roomId: conversationId });
+
+    let isFirstSocketMessage = false;
 
     socket.on("receive_text_convo", (data) => {
       if (data.userId === user.userId) {
@@ -36,22 +106,35 @@ const Chat = () => {
       setConversation((prev) => {
         return [...prev, data];
       });
+
+      // Scroll to bottom only on new incoming messages (not on load more)
+      // Use setTimeout to ensure state is updated first
+      if (!isLoadingMore) {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 0);
+      }
     });
 
-    // Fetch conversation details
+    // Fetch conversation details (initial load, no cursor)
     const fetchConversation = async () => {
       try {
         const response = await axios.post('/api/interaction/message/getText', {
           conversationId
+          // cursor is not sent on first load, backend uses default null
         });
         setConversationDetails(response.data.conversationDetails);
         setConversation(response.data.chats);
+        setCursor(response.data.cursor);
+        setHasMore(response.data.hasMore);
         setUnreadMessageCount(prev=>prev-response.data.seenCount)
+        setIsInitialLoad(false); // Mark initial load as complete
         
         console.log('Conversation loaded:', response.data);
       } catch (err) {
         console.error('Error fetching conversation:', err.message);
         toast.error('Failed to load conversation');
+        setIsInitialLoad(false);
       }
     };
 
@@ -61,6 +144,32 @@ const Chat = () => {
       socket.emit("leave_room", conversationId);
     };
   }, [user, conversationId]);
+
+  const handleLoadMore = async () => {
+    if (!hasMore || isLoadingMore || !cursor) return;
+
+    setIsLoadingMore(true);
+    setShowScrollButton(false);
+    
+    try {
+      const response = await axios.post('/api/interaction/message/getText', {
+        conversationId,
+        cursor
+      });
+
+      // Prepend new messages - NO SCROLL, just update state
+      setConversation((prev) => [...response.data.chats, ...prev]);
+      setCursor(response.data.cursor);
+      setHasMore(response.data.hasMore);
+
+      console.log('More messages loaded:', response.data);
+    } catch (err) {
+      console.error('Error loading more messages:', err.message);
+      toast.error('Failed to load more messages');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -112,7 +221,22 @@ const Chat = () => {
         </div>
       </div>
 
-      <div className="chat-messages-container">
+      <div className="chat-messages-container" ref={messagesContainerRef}>
+        {/* Load More Button - appears when scrolling up if hasMore is true */}
+        {hasMore && (
+          <button
+            ref={loadMoreRef}
+            onClick={handleLoadMore}
+            disabled={isLoadingMore}
+            className="chat-load-more-button"
+            style={{
+              display: 'none',
+            }}
+          >
+            {isLoadingMore ? 'Loading...' : 'Load More'}
+          </button>
+        )}
+
         {conversation.map((item, index) => {
           const isCurrentUser = item.userId === user?.userId || item.userId === 'current';
           return (
@@ -159,6 +283,31 @@ const Chat = () => {
         })}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Scroll to Bottom Button */}
+      {showScrollButton && (
+        <button
+          onClick={handleScrollToBottom}
+          className="chat-scroll-down-button"
+          title="Scroll to latest messages"
+        >
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path 
+              d="M12 5V19M12 19L7 14M12 19L17 14" 
+              stroke="white" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
 
       <div className="chat-input-container">
         <input

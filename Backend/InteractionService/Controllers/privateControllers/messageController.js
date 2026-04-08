@@ -69,7 +69,7 @@ const chatList = async(req,res)=>{
 
  const conversationDetails = async(req,res)=>{
 
-     const {conversationId} = req.body;
+     const {conversationId,cursor=null} = req.body;
      const sender = req.user;
       const existingConvo = await Conversation.findOne({ members: sender.userId,conversationId});
       if(!existingConvo){
@@ -77,7 +77,18 @@ const chatList = async(req,res)=>{
             message: "You dont have access to this conversation",
         });
       }
-      const chatData = await Chat.find({conversationId})
+      let query = {
+        conversationId,
+      }
+      if(cursor){
+        query._id = {$lt:cursor}
+      }
+      const chatData = await Chat.find(
+         query  
+      )
+      .limit(11)
+     
+
       const seenData = await Chat.updateMany(
         {
           conversationId,
@@ -90,12 +101,28 @@ const chatList = async(req,res)=>{
           }
          }
       )
+      let nextCursor ;
+      let hasMore = true;
+
+      if(chatData.length>9){
+        nextCursor = chatData[9]._id
+      }
+      else{
+        nextCursor = null;
+      }
+
+      if(chatData.length!==11){
+        hasMore = false;
+      }
+      
 
       return res.status(200).json({
             conversationDetails:existingConvo,
             chats:chatData,
             message: "fetched message",
-            seenCount:seenData.modifiedCount
+            seenCount:seenData.modifiedCount,
+            cursor:nextCursor,
+            hasMore
         });
 
  }

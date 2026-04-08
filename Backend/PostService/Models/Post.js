@@ -56,11 +56,11 @@ const PostSchema = new mongoose.Schema(
 );
 
 
-PostSchema.index({ location: "2dsphere" });
+ 
 
 PostSchema.index({
   location: "2dsphere",
-  createdAt: -1,
+  _id: -1,
 });
 const Post = mongoose.model("Post", PostSchema);
 module.exports = {Post};
