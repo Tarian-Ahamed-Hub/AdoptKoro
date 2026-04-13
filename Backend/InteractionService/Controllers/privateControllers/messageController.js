@@ -8,6 +8,7 @@ const { dbHandler } = require("../../../PostService/HelperFuncs/dbHelper");
  
  const { CompressionTypes } = require("kafkajs");
 const { checkStatus, getKafkaProducer } = require("../../Kafka/KafkaProducer");
+const { encrypt, decrypt } = require("../../HelperFuncs/GlobalHelper");
 
 const chatList = async(req,res)=>{
 
@@ -47,12 +48,21 @@ const chatList = async(req,res)=>{
               pic:1,
               userId: 1,
               createdAt: 1,
-              seen:1
+              seen:1,
+              iv:1
             }
           }
         }
 
      ])
+    
+      for (let i = 0; i < chatlist.length; i++) {
+        const chat = chatlist[i];
+         if(chat.lastMessage){
+           chat.lastMessage.text = decrypt(chat.lastMessage.iv,chat.lastMessage.text)
+         }
+      }
+
         return res.status(200).json({
             chatList:chatlist,
             message: "fetched message",
@@ -115,6 +125,11 @@ const chatList = async(req,res)=>{
         hasMore = false;
       }
       
+
+       for (let i = 0; i < chatData.length; i++) {
+        const chat = chatData[i];
+            chatData[i].text = decrypt(chat.iv,chat.text)
+        }
 
       return res.status(200).json({
             conversationDetails:existingConvo,
@@ -214,7 +229,12 @@ let chatData = {
     }
      
     const producer = getKafkaProducer();
-    console.log(checkStatus())
+    
+    const encryptedData = encrypt(chatData.text);
+    const encrypted = {...chatData};
+    encrypted.iv = encryptedData.iv;
+    encrypted.text = encryptedData.encryptedContent;
+
   
     await producer.send({
       topic:"chat",
@@ -222,12 +242,10 @@ let chatData = {
       messages:[
         {
           key:"key",
-          value:JSON.stringify(chatData)
+          value:JSON.stringify(encrypted)
         }
       ]
     })
-    console.log(checkStatus())
-    
 
    
 

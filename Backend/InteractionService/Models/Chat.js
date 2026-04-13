@@ -7,9 +7,9 @@ const chatSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    conversationName:{
-        type:String,
-        required:true
+    conversationName: {
+      type: String,
+      required: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -17,7 +17,7 @@ const chatSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-
+    iv: { type: String, required: true },
     name: {
       type: String,
       required: true,
@@ -32,13 +32,13 @@ const chatSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-  
+
     seen: {
       type: Boolean,
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Chat", chatSchema);

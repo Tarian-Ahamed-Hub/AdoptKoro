@@ -68,8 +68,10 @@ const ChatList = () => {
             <p className="chatlist-empty-text">No conversations yet</p>
           </div>
         ) : (
-          chats?.map((chat) => (
-            <div
+          chats?.map((chat) => {
+            if(chat.lastMessage)
+            return(
+              <div
               key={chat.conversationId}
               className={`chatlist-item ${!chat.lastMessage.seen ? 'unread' : ''}`}
               onClick={() => handleChatClick(chat.conversationId)}
@@ -102,7 +104,9 @@ const ChatList = () => {
                 </div>
               </div>
             </div>
-          ))
+            ) 
+            
+})
         )}
       </div>
     </div>

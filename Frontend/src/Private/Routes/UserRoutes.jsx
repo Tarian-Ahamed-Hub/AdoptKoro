@@ -40,7 +40,7 @@ export default function UserRoutes({children }) {
          <UserLayout /> 
      ):
      (
-         <Navigate to="/feed" replace /> 
+         <Navigate to="/feed/posts/nearest" replace /> 
      )
 
      }

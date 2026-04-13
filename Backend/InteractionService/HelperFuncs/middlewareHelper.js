@@ -7,10 +7,13 @@ const autheticateClient = async(req,res,next,roles)=>{
   
   
 try {
-  const sessionToken = req.cookies.sessionToken;
-  if(!sessionToken){
-    throw new Error("No token");
-  }
+   const authHeader = req.headers.authorization;
+  const sessionToken = authHeader.split(" ")[1];
+
+    if (!sessionToken || !authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new Error("No token");
+    }
+    
   const decoded = jwt.verify(sessionToken, process.env.JWT_SECRET);
   const cacheRedis = getRedisClient();
   const isBlocked = await cacheRedis.get(`tokenBlock:${decoded.tokenId}`);

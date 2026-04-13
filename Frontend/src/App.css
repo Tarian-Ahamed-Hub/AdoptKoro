@@ -10,7 +10,7 @@ body{
 }
 .ContentContainer{
   margin: auto;
-  max-width: 1200px;
+  max-width: 1080px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -155,7 +155,7 @@ body{
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.8);
+  
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
 }
@@ -722,73 +722,7 @@ background-color: transparent;
 
 
 /* PostList Styles */
-/* Loading indicator for infinite scroll */
-.loading-more-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-}
 
-.loading-more-text {
-  color: #4b5563;
-}
-
-/* Observer target */
-.observer-target {
-  height: 80px;
-  width: 100%;
-}
-
-/* No more posts message */
-.no-more-posts-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-}
-
-.no-more-posts-text {
-  color: #6b7280;
-}
-
-/* No posts found */
-.no-posts-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-}
-
-.no-posts-text {
-  color: #6b7280;
-}
-
-/* Initial loading */
-.initial-loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-}
-
-.initial-loading-text {
-  color: #4b5563;
-}
-
-/* Error message */
-.error-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-}
-
-.error-text {
-  color: #ef4444;
-}
-
- 
 /* PostList Component Styles - Prefix: pl- */
 
 .pl-container {
@@ -798,19 +732,21 @@ background-color: transparent;
   padding: 20px 16px;
 }
 
-/* Grid Layout - Flexbox for centered single column */
+/* Grid Layout - Flex with wrap for phone-sized cards */
 .pl-grid {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: flex-start;
   gap: 32px;
 }
 
-/* Post Card (pc-card) Sizing for PostList Context */
+/* Post Card (pc-card) - Phone sized on all screens */
 .pl-grid .pc-card {
-  width: 100%;
-  max-width: 700px; /* 700px on PC */
+  width: 320px;
   margin: 0;
+  flex-shrink: 0;
 }
 
 /* Loading State */
@@ -907,10 +843,12 @@ background-color: transparent;
 
   .pl-grid {
     gap: 24px;
+    justify-content: center;
   }
 
   .pl-grid .pc-card {
-    max-width: 100%; /* Full width on mobile */
+    width: 320px;
+    flex-shrink: 0;
   }
 
   .pl-empty {
@@ -928,8 +866,13 @@ background-color: transparent;
 }
 
 @media (max-width: 480px) {
+  .pl-grid {
+    gap: 20px;
+  }
+
   .pl-grid .pc-card {
-    max-width: 320px; /* Phone width */
+    width: 320px;
+    flex-shrink: 0;
   }
 
   .pl-loading p,
@@ -942,6 +885,102 @@ background-color: transparent;
     height: 40px;
   }
 }
+
+/* Desktop - multiple columns with phone-sized cards */
+@media (min-width: 769px) {
+  .pl-grid {
+    gap: 32px;
+    justify-content: flex-start;
+  }
+
+  .pl-grid .pc-card {
+    width: 320px;
+    flex-shrink: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pl-container {
+    padding: 24px;
+  }
+
+  .pl-grid {
+    gap: 32px;
+  }
+
+  .pl-grid .pc-card {
+    width: 320px;
+    flex-shrink: 0;
+  }
+}
+
+/* Loading indicator for infinite scroll */
+.loading-more-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.loading-more-text {
+  color: #4b5563;
+}
+
+/* Observer target */
+.observer-target {
+  height: 80px;
+  width: 100%;
+}
+
+/* No more posts message */
+.no-more-posts-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.no-more-posts-text {
+  color: #6b7280;
+}
+
+/* No posts found */
+.no-posts-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.no-posts-text {
+  color: #6b7280;
+}
+
+/* Initial loading */
+.initial-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.initial-loading-text {
+  color: #4b5563;
+}
+
+/* Error message */
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.error-text {
+  color: #ef4444;
+}
+
+ 
 
 /* Chat List Styles */
  
@@ -1735,6 +1774,8 @@ background-color: transparent;
 
 /* Post Card Component Styles - Prefix: pc- */
 
+/* Post Card Component Styles - Prefix: pc- */
+
 .pc-card {
   background: linear-gradient(135deg, rgba(60, 60, 95, 0.95) 0%, rgba(50, 50, 80, 0.95) 100%);
   border-radius: 16px;
@@ -1744,9 +1785,10 @@ background-color: transparent;
   border: 1px solid rgba(139, 92, 246, 0.2);
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
+  width: 320px;
+  margin: 0;
+  flex-wrap: wrap;
+  align-content: flex-start;
 }
 
 .pc-card:hover {
@@ -1763,6 +1805,7 @@ background-color: transparent;
   padding: 16px;
   background: rgba(30, 30, 50, 0.4);
   border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  width: 100%;
 }
 
 .pc-avatar {
@@ -1770,7 +1813,7 @@ background-color: transparent;
   height: 48px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(139, 92, 246, 0.5);
+   
   flex-shrink: 0;
 }
 
@@ -1824,12 +1867,13 @@ background-color: transparent;
 .pc-image-wrapper {
   background: rgba(20, 20, 40, 0.5);
   flex-shrink: 0;
+  width: 100%;
 }
 
 .pc-image-container {
   position: relative;
   width: 100%;
-  height: 320px; /* Fixed height - no more size changes */
+  height: 320px;
   overflow: hidden;
 }
 
@@ -1856,7 +1900,7 @@ background-color: transparent;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  z-index: 10;
+  z-index: 1;
 }
 
 .pc-nav-btn:hover {
@@ -1898,6 +1942,7 @@ background-color: transparent;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
 }
 
 .pc-title {
@@ -1959,6 +2004,9 @@ background-color: transparent;
   padding: 16px;
   background: rgba(30, 30, 50, 0.4);
   border-top: 1px solid rgba(139, 92, 246, 0.1);
+  width: 100%;
+  flex-wrap: wrap;
+  align-content: flex-start;
 }
 
 .pc-input {
@@ -1971,6 +2019,7 @@ background-color: transparent;
   font-size: 14px;
   outline: none;
   transition: all 0.2s ease;
+  min-width: 200px;
 }
 
 .pc-input::placeholder {
@@ -2026,6 +2075,7 @@ background-color: transparent;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-width: 200px;
 }
 
 .pc-toggle-active {
@@ -2069,173 +2119,13 @@ background-color: transparent;
   gap: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 200px;
 }
 
 .pc-login-prompt:hover {
   background: rgba(139, 92, 246, 0.2);
   border-color: rgba(139, 92, 246, 0.5);
   transform: translateY(-2px);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .pc-card {
-    border-radius: 12px;
-    max-width: 100%;
-  }
-
-  .pc-header {
-    padding: 12px;
-  }
-
-  .pc-avatar {
-    width: 40px;
-    height: 40px;
-  }
-
-  .pc-username {
-    font-size: 15px;
-  }
-
-  .pc-timestamp {
-    font-size: 12px;
-  }
-
-  .pc-image-container {
-    height: 280px;
-  }
-
-  .pc-content {
-    padding: 12px;
-  }
-
-  .pc-title {
-    font-size: 18px;
-  }
-
-  .pc-description {
-    font-size: 13px;
-  }
-
-  .pc-action {
-    padding: 12px;
-  }
-
-  .pc-nav-btn {
-    width: 36px;
-    height: 36px;
-  }
-}
-
-@media (max-width: 480px) {
-  .pc-card {
-    max-width: 320px; /* 320px width for phones */
-  }
-
-  .pc-image-container {
-    height: 320px; /* Even shorter on very small screens */
-  }
-
-  .pc-badge {
-    font-size: 11px;
-    padding: 4px 10px;
-  }
-
-  .pc-nav-left {
-    left: 8px;
-  }
-
-  .pc-nav-right {
-    right: 8px;
-  }
-
-  .pc-indicator {
-    bottom: 8px;
-    right: 8px;
-    font-size: 12px;
-    padding: 4px 10px;
-  }
-}
-
-@media (min-width: 769px) {
-  .pc-card {
-    max-width: 1000px; /* Big on tablet */
-  }
-
-  .pc-image-container {
-    height: 500px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .pc-card {
-    max-width: 1200px; /* Really big on desktop */
-  }
-
-  .pc-image-container {
-    height: 600px; /* Huge images on desktop */
-  }
-
-  .pc-header {
-    padding: 24px;
-  }
-
-  .pc-avatar {
-    width: 56px;
-    height: 56px;
-  }
-
-  .pc-username {
-    font-size: 18px;
-  }
-
-  .pc-timestamp {
-    font-size: 14px;
-  }
-
-  .pc-content {
-    padding: 24px;
-  }
-
-  .pc-action {
-    padding: 24px;
-  }
-
-  .pc-title {
-    font-size: 28px;
-  }
-
-  .pc-description {
-    font-size: 16px;
-  }
-
-  .pc-nav-btn {
-    width: 48px;
-    height: 48px;
-  }
-
-  .pc-indicator {
-    font-size: 15px;
-    padding: 8px 16px;
-  }
-}
-
-@media (min-width: 1400px) {
-  .pc-card {
-    max-width: 1400px; /* Maximum huge size */
-  }
-
-  .pc-image-container {
-    height: 700px; /* Extra tall images */
-  }
-
-  .pc-title {
-    font-size: 32px;
-  }
-
-  .pc-description {
-    font-size: 18px;
-  }
 }
 
 /* Loading skeleton animation */
@@ -2341,7 +2231,6 @@ background-color: transparent;
 }
 
 .pc-viewer-close {
-  
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -2349,7 +2238,7 @@ background-color: transparent;
   border: 1px solid rgba(220, 38, 38, 0.4);
   color: #f87171;
   display: flex;
-  align-items:center;
+  align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -3009,4 +2898,309 @@ background-color: transparent;
 
 .npf-success {
   animation: npf-success 0.3s ease;
+}
+
+/* ====================== LOGIN PAGE CSS (updated - no emoji styles) ====================== */
+.login-container {
+  height: 91vh;
+  width: 100%;
+  
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.login-wrapper {
+  display: flex;
+  
+  width: 100%;
+}
+
+/* ==================== VISUAL / HERO SIDE ==================== */
+.login-visual {
+  flex: 1;
+  background: linear-gradient(135deg, #ff9f1c 0%, #00d4aa 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  overflow: hidden;
+  color: white;
+}
+
+.login-visual-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.login-visual-content {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  text-align: center;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 3rem;
+}
+
+.login-logo {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+.login-brand-name {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin: 0;
+}
+
+.login-visual-title {
+  font-size: 2.75rem;
+  line-height: 1.1;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.login-visual-subtitle {
+  font-size: 1.25rem;
+  opacity: 0.95;
+  margin-bottom: 3rem;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.4;
+}
+
+.login-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(12px);
+  border-radius: 9999px;
+  padding: 1rem 2rem;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.login-stat {
+  text-align: center;
+}
+
+.login-stat-number {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.login-stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.login-stat-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.4);
+}
+
+/* ==================== FORM / CARD SIDE ==================== */
+.login-form-section {
+  flex: 1;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15),
+              0 0 0 1px rgb(255 255 255) inset;
+  padding: 3rem 2.5rem;
+  text-align: center;
+  position: relative;
+}
+
+.login-card-header {
+  margin-bottom: 2.5rem;
+}
+
+.login-card-title {
+  font-size: 1.85rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.login-card-subtitle {
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+.login-google-btn {
+  width: 100%;
+  height: 56px;                    /* slightly shorter for better proportion */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 2px solid #4285f4;
+  color: #111827;                  /* pure dark black text */
+  font-size: 1.02rem;              /* smaller and cleaner */
+  font-weight: 500;                /* less heavy */
+  letter-spacing: -0.015em;        /* tighter letter spacing */
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px -3px rgb(66 133 244 / 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 1.5rem;
+}
+
+.login-google-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 20px 25px -5px rgb(66 133 244 / 0.2);
+  background: #f8fafc;
+}
+
+.login-google-btn:active {
+  transform: scale(0.98);
+}
+
+/* Explicit text styling */
+.login-google-text {
+  color: #111827;                  /* ensures text is always black */
+  font-size: 1.02rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+.login-google-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.login-card-footer {
+  margin-top: 2rem;
+}
+
+.login-trust-text {
+  color: #10b981;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.login-policy-text {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.login-link {
+  color: #0ea5e9;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.login-pet-badge {
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 2px solid #10b981;
+  color: #10b981;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 20px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.2);
+  display: flex;
+  align-items: center;
+}
+
+/* ==================== LOADING STATE ==================== */
+.login-loading {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ff9f1c 0%, #00d4aa 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.login-loading-content {
+  text-align: center;
+}
+
+.login-spinner {
+  width: 64px;
+  height: 64px;
+  border: 6px solid rgba(255,255,255,0.3);
+  border-top: 6px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 2rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-loading-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.login-loading-subtext {
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1024px) {
+  .login-wrapper {
+    flex-direction: column-reverse;
+  }
+  .login-visual {
+    padding: 4rem 2rem;
+    min-height: 420px;
+  }
+  .login-visual-title {
+    font-size: 2.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-card {
+    padding: 2.25rem 1.5rem;
+  }
+  .login-visual-title {
+    font-size: 2rem;
+  }
+  .login-visual-subtitle {
+    font-size: 1.15rem;
+  }
 }

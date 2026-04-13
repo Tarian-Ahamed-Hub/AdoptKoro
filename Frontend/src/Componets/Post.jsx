@@ -3,6 +3,7 @@ import axios from '../Configs/AxiosConfig';
 import { toast } from 'react-toastify';
 import { useAuth } from '../Context/AuthProvider';
 import { useLocation } from 'react-router-dom';
+import account from "../images/account.png"
 
 const Post = ({ post, setPosts }) => {
   const { user } = useAuth();
@@ -12,10 +13,10 @@ const Post = ({ post, setPosts }) => {
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Check if we're on the user's profile page
+ 
   const isUserProfile = location.pathname === '/user/profile';
 
-  // Prevent body scroll when viewer is open
+ 
   useEffect(() => {
     if (showImageViewer) {
       document.body.style.overflow = 'hidden';
@@ -102,7 +103,13 @@ const Post = ({ post, setPosts }) => {
         {/* Header */}
         <div className="pc-header">
           <img 
-            src={post?.user.pic} 
+            src={(() => {
+                                       if(user?.pic && user.pic!=="")
+                                        return user.pic
+                                      else{
+                                        return account;
+                                      }
+                                      })()} 
             alt={post?.user.name}
             className="pc-avatar"
           />

@@ -45,7 +45,7 @@ function App() {
           <div className='ContentContainer'>
             
           <Routes>
-             <Route path="/" element={<Navigate to="/feed/latest/Cat/Dhaka" replace />} />
+             <Route path="/" element={<Navigate to="/feed/posts/nearest" replace />} />
             <Route path='/feed/*' element={<FeedWrapper/> }/> 
           
             <Route path='/login' element={<GoogleAuthWrapper/> }/> 

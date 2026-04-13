@@ -102,8 +102,9 @@ useEffect(() => {
     } catch (err) {
       console.error(err);
     } finally {
+      localStorage.removeItem("token")
       setUser(null);
-      navigate("/feed");
+      navigate("/");
     }
   };
 

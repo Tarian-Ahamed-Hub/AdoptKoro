@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../Context/AuthProvider';
 import { useParams } from 'react-router-dom';
 import FeedFilters from '../Componets/Filters';
+import { useFilters } from '../Context/FilterContext';
 
 export default function Home() {
   const { user, userLoading } = useAuth();
@@ -15,6 +16,7 @@ export default function Home() {
   const [currentDbCursor, setCurrentDbCursor] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const {currentDistrict,currentCategory}= useFilters();
   
   // Reference for the observer
   const observerRef = useRef();
@@ -33,7 +35,7 @@ export default function Home() {
 
       try {
         const response = await axios.post(
-          `/api/post/public/getlatestpostsbycategory/${category}/${location}`,
+          `/api/post/public/getlatestpostsbycategory/${currentCategory.name}/${currentDistrict.district}`,
           data
         );
         
@@ -60,7 +62,7 @@ export default function Home() {
     setHasMore(true);
     
     fetchPosts();
-  }, [category, location]);
+  }, [currentCategory, currentDistrict]);
 
   // Fetch more posts
   const fetchMorePosts = useCallback(async () => {

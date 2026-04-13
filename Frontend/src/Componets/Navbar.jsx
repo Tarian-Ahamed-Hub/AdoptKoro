@@ -4,6 +4,7 @@ import { useAuth } from '../Context/AuthProvider';
 import { useEffect } from 'react';
 import { useFilters } from '../Context/FilterContext';
 import messenger from "../images/messenger.png"
+import nearby from "../images/nearby.png"
 import pet from "../images/pet.png"
 import account from "../images/account.png"
 export default function Navbar() {
@@ -17,8 +18,14 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="nav-container">
         <div className="nav-item">
+          <Link to={`/feed/posts/nearest`}><img style={{width:"32px"}} src={nearby}/></Link>
+        </div>
+        <div className="nav-divider"></div>
+        <div className="nav-item">
           <Link to={`/feed/latest/${currentCategory.name}/${currentDistrict.district}`}><img style={{width:"32px"}} src={pet}/></Link>
         </div>
+
+         
         
          {user &&
          <>
@@ -40,13 +47,18 @@ export default function Navbar() {
         <div className="nav-divider"></div>
         <div className="nav-item">
         
-             {user?.pic?
+             {user?
              (
                  <Link to={"/user/profile"}>
-             <img src={user?.pic} style={{width:"30px",border:"0px solid black",borderRadius:"50%"}}
-                onError={(e) => {
-               e.currentTarget.src = account;
-                }}
+             <img src={(() => {
+                 if(user?.pic && user.pic!=="")
+                  return user.pic
+                else{
+                  return account;
+                }
+                })() } 
+                style={{width:"30px",border:"0px solid black",borderRadius:"50%"}}
+                
              >
              </img>
               </Link>

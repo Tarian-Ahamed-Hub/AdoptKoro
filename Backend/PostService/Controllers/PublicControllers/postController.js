@@ -357,7 +357,9 @@ const geoNearStage = {
 const nearestPosts = async (req, res) => {
 
 
-  const { lon,lat, category,cursor=null } = req.body;
+  try{
+
+    const { lon,lat, category,cursor=null } = req.body;
 
   let coordinates = [lon,lat]
   
@@ -373,14 +375,12 @@ const nearestPosts = async (req, res) => {
   const parsedLon = parseFloat(lon);
     const parsedLat = parseFloat(lat);
 
-
-    if (isNaN(parsedLon) || isNaN(parsedLat)) {
-      return res.status(400).json({ message: "Invalid lon/lat", lon, lat });
-    }
+ 
   
 
-  let postData;
+  let postData=null;
   let cacheKey = `nearest:${lon}-${lat}:${category}:${cursor}`
+  const lockKey = `${cacheKey}:lock`;
   let redis = getRedisClient()
   let cacheExists = await redis.exists(cacheKey)
   if(cacheExists){
@@ -392,10 +392,44 @@ const nearestPosts = async (req, res) => {
    
   }
   else{
-    postData = await getNearestPostFromDB(lon,lat,category,6,cursor,cacheKey)
-    console.log("FROM DB")
+    const lockAcquired = await redis.set(lockKey, "1", "NX", "PX", 15000);
+    if(lockAcquired==="OK"){
+      try{
+           postData = await getNearestPostFromDB(lon,lat,category,MAX_POSTS,cursor,cacheKey)
+         console.log("FROM DB")
+
+      }
+      catch(err){
+        throw err;
+      }
+      finally {
+        await redis.del(lockKey);
+      }
+  
+    }
+    else{
+       let attempts = 1;
+       let max_attempts = 5;
+       let wait_time = 200;
+
+       while(attempts<=max_attempts){
+          await new Promise((resolve)=>setTimeout(resolve,wait_time));
+
+          if (await redis.exists(cacheKey)) {
+          postData = await getPostsFromCache(cacheKey);
+          console.log(`FROM CACHE (after wait, attempt ${attempts}),max time ${attempts*wait_time}ms`);
+          break;
+          }
+
+          attempts++;
+
+       }
+       if(!postData){
+        throw err;
+       }
+    }
+    
   }
-   
   
   return res.status(200).json({
        message:"Fetched Posts",
@@ -404,13 +438,24 @@ const nearestPosts = async (req, res) => {
       
         
     })
+
+
+  }
+  catch(err){
+      return res.status(503).json({
+          success: false,
+          message: "Please Try Again",
+      });
+  }
  
 
 
 //members = await redis.zrange(key, "2450","+inf",  "BYSCORE", "LIMIT", 0, 10,'WITHSCORES')
 
- 
 
 };
 
-module.exports = { createPost, getUserPosts, updatePost,nearestPosts };
+
+ 
+
+module.exports = { createPost, getUserPosts, updatePost,nearestPosts};

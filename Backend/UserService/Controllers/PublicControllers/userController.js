@@ -34,7 +34,7 @@ const signInWithGoogle = async (req, res) => {
           $setOnInsert: {
             email,
             name,
-            pic: picture,
+            pic: "",
             roles: ["user"],
             password: uuidv4(),
           },
@@ -103,17 +103,10 @@ const signInWithGoogle = async (req, res) => {
       }
           
       
-     return res.status(200)
-            .cookie("sessionToken",token,{
-                httpOnly: true,
-                secure: process.env.PRODUCTION === "true",   
-                sameSite: "lax",
-                maxAge: 30 * 24 * 60 * 60 * 1000, 
-                path: "/" 
-            })
-            .json({
+     return res.status(200).json({
                 message:"Logged In",
-                user:user
+                user:user,
+                token: token
             })
     });
   } catch (err) {

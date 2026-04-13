@@ -3,6 +3,7 @@ import { useAuth } from '../../Context/AuthProvider';
 import NewPostForm from '../../Componets/NewPostForm';
 import PostList from '../../Componets/PostList';
 import axios from '../../Configs/AxiosConfig';
+import account from "../../images/account.png"
 
 export default function UserProfile() {
  const {user,loading,logout} = useAuth();
@@ -42,7 +43,13 @@ export default function UserProfile() {
    <div className="profile-container">
       <div className="profile-card">
         <div className="profile-header">
-          <img className="profile-pic" src={user?.pic} alt="user profile pic" />
+          <img className="profile-pic" src={(() => {
+                           if(user?.pic && user.pic!=="")
+                            return user.pic
+                          else{
+                            return account;
+                          }
+                          })()} alt="user profile pic" />
           <div className="profile-info">
             <h2 className="profile-name">{user?.name}</h2>
            
