@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require("uuid");
 const { cacheRedis, getRedisClient } = require("../../Configs/cacheRedis");
 const {autheticateUserHelper} = require("../../HelperFuncs/authenticate");
 const  mongoose = require("mongoose");
-const { getKafkaProducer } = require("../../../PostService/Kafka/KafkaProducer");
+const { getKafkaProducer } = require("../../Kafka/KafkaProducer");
  const { CompressionTypes } = require("kafkajs");
 
 const signInWithGoogle = async (req, res) => {

@@ -14,7 +14,7 @@ const http = require("http")
 
 
 const {connectRedis,shutdownRedis} = require("./Configs/cacheRedis");
-const { connectKafkaProducer, getKafkaProducer } = require("../PostService/Kafka/KafkaProducer");
+const { connectKafkaProducer, getKafkaProducer } = require("./Kafka/KafkaProducer");
 connectRedis();
 connectKafkaProducer();
  

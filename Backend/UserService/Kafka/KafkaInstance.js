@@ -1,13 +1,16 @@
-const {Kafka} = require("kafkajs")
-
+const { Kafka } = require("kafkajs");
+const fs = require("fs");
+ 
 const KafkaRedpanda = new Kafka({
-  brokers: [process.env.KAFKA_URL],
-  ssl: {},
-  sasl: {
-    mechanism: process.env.KAFKA_MECHANISM,
-    username: process.env.KAFKA_USERNAME,
-    password: process.env.KAFKA_PASS,
-  }
-})
+  clientId: "posts-service",
+  brokers: [process.env.KAFKA_URL], 
 
-module.exports = {KafkaRedpanda}
+  ssl: {
+  rejectUnauthorized: true,
+  ca: process.env.ca,
+  cert: process.env.ac,
+  key: process.env.ak,
+}
+});
+
+module.exports = { KafkaRedpanda };

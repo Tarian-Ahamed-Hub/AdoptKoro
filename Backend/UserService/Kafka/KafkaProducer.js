@@ -1,9 +1,10 @@
 const { KafkaRedpanda } = require("./KafkaInstance");
-
+ 
 const kafkaConsumer = KafkaRedpanda.consumer({groupId: "posts-service-group"})
 
 const kafkaProducer = KafkaRedpanda.producer()
 const connectKafkaProducer = async()=>{
+ 
     try{
         await kafkaProducer.connect();
         console.log("Kafka Producer connected")
@@ -20,10 +21,10 @@ const connectKafkaPostSubscriber = async () => {
     topic: "posts",
     fromBeginning: true
   })
-  await consumer.run({
+  await kafkaConsumer.run({
     eachMessage: async ({topic, partition, message}) => {
       const topicInfo = `topic: ${topic} (${partition}|${message.offset})`
-      const messageInfo = `key: ${message.key}, value: ${message.value}`
+      const messageInfo = `key: ${message.key?.toString()}, value: ${message.value?.toString()}`
       console.log(`Message consumed: ${topicInfo}, ${messageInfo}`)
     },
   })
