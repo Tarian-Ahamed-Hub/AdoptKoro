@@ -1,7 +1,6 @@
 import React from "react";
 import { useFilters } from "../Context/FilterContext";
-import { useNavigate } from "react-router-dom";
- 
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function FeedFilters() {
   const {
@@ -14,25 +13,29 @@ export default function FeedFilters() {
   } = useFilters();
 
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
-  // Handle category change
+  // On the nearest page, stay on it: the page refetches from the filter context.
+  const isNearest = pathname.startsWith("/feed/posts/nearest");
+
   const onCategoryChange = (e) => {
-    const selectedName = e.target.value;
-    const category = categories.find((c) => c.name === selectedName);
+    const category = categories.find((c) => c.name === e.target.value);
     if (!category) return;
 
     setCurrentCategory(category);
-    navigate(`/feed/latest/${category.name}/${currentDistrict.district}`);
+    if (!isNearest) {
+      navigate(`/feed/latest/${category.name}/${currentDistrict.district}`);
+    }
   };
 
-  // Handle district change
   const onDistrictChange = (e) => {
-    const selectedDistrictName = e.target.value;
-    const district = districts.find((d) => d.district === selectedDistrictName);
+    const district = districts.find((d) => d.district === e.target.value);
     if (!district) return;
 
     setCurrentDistrict(district);
-    navigate(`/feed/latest/${currentCategory.name}/${district.district}`);
+    if (!isNearest) {
+      navigate(`/feed/latest/${currentCategory.name}/${district.district}`);
+    }
   };
 
   return (

@@ -15,43 +15,39 @@ export default function AuthProvider({children}) {
 
  const navigate = useNavigate();
 
- const authenticate = async()=>{
-    const data = {
-     roles:["user"]
-    }
-    try{
-        const res =  await axios.post( "/api/auth/authenticate",data);
-        setUser(res.data.user);
-        console.log(res.data.user)
-          if (!socket.connected) {
-            socket.connect();
-             function joinRoom(roomId) {
-            const data = { roomId };
-            console.log("join_room", data);
-            socket.emit("join_room", data);
-          }
-          console.log("Authenticate:Trying to join room ")
-        joinRoom(res.data.user.userId);
+  
+ useEffect(() => {
+  if (user?.userId){
+    socket.auth = { token: localStorage.getItem("token") };
+    if (!socket.connected) socket.connect();
+  }
+}, [user?.userId]);
 
-          }
-         
-    
+ const authenticate = async () => {
+  try {
+    const res = await axios.post("/api/auth/authenticate", { roles: ["user"] });
+    setUser(res.data.user);
 
-        return res.data;
+    if (!socket.connected) {
+      socket.connect();
     }
-    catch(err){
 
-      setUser(null);
-      navigate("/login");
-      return null;
-    }
-    finally{
-        setLoading(false)
-    }
- }
+    return res.data;
+  } catch (err) {
+    setUser(null);
+    return null;
+  } finally {
+    setLoading(false);
+  }
+};
 
 useEffect(() => {
   if (!user?.userId) return;
+
+  if (!socket.connected) {
+      socket.connect();
+    }
+    
   const getCount = async()=>{
         const messageCount = await axios.get("/api/interaction/message/messageCount")
         setUnreadMessageCount(messageCount.data.unseenCount);

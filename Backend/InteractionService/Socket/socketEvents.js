@@ -3,18 +3,13 @@ const cookie = require('cookie')
 const jwt = require('jsonwebtoken')
 const socketMiddleware = (socket, next) => {
   try {
-    const cookieHeader = socket.handshake.headers.cookie;
-    if (!cookieHeader) return next(new Error("NO_COOKIE"));
+     let token = socket.handshake.auth?.token;
 
-    const cookies = cookie.parse(cookieHeader);
-    const token = cookies.sessionToken;
-
-    if (!token) return next(new Error("NO_SESSION"));
+   if (!token) return next(new Error("NO_SESSION"));
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     socket.user = decoded;
-    
+
     next();
   } catch (err) {
     next(new Error("INVALID_SESSION"));
@@ -29,16 +24,33 @@ function setupSocketEvents(io) {
   
   io.on('connection', (socket) => {
     const clientId = socket.id;
+    const { userId, userName } = socket.user;
  
-    console.log(`Client connected: ${clientId}`);
+    console.log(`Client connected: ${clientId} on ${process.pid}`);
+    socket.join(`room:${userId}`);
 
-    socket.on("join_room",(data)=>{
-       socket.join(`room:${data.roomId}`)
-       console.log(socket.user.userName,`(${socket.user.userId})`," joined room ",data.roomId)
-    })
+     socket.on("join_room", async ({ roomId } = {}) => {
+      try {
+        if (typeof roomId !== "string" || roomId === userId) return;
+
+        const isMember = await Conversation.exists({
+          conversationId: roomId,
+          members: userId,
+        });
+        if (!isMember) {
+          console.log(`${userName} (${userId}) denied room ${roomId}`);
+          return;
+        }
+
+        socket.join(`room:${roomId}`);
+      } catch (err) {
+        console.log("join_room error:", err.message);
+      }
+    });
+    
 
      socket.on("leave_room", (roomId) => {
-        socket.leave(roomId);
+        socket.leave(`room:${roomId}`);
         console.log(`${socket.id} left ${roomId}`);
       });
 
@@ -53,3 +65,4 @@ function setupSocketEvents(io) {
 }
 
 module.exports = { setupSocketEvents };
+//[prod]

@@ -20,7 +20,10 @@ const { connectKafkaRegistrationSubscriber } = require("./Kafka/KafkaRegistratio
 const { publicRoutes } = require("./Routes/PublicRoutes/publicRoutes");
 const { connectKafkaPostSubscriber } = require("./Kafka/KafkaPostConsumer");
 const { Post } = require("./Models/Post");
+const rateLimiter = require("./Configs/rateLimitMiddleware");
  
+
+
 connectRedis();
 connectKafkaProducer();
 connectKafkaRegistrationSubscriber()
@@ -93,6 +96,7 @@ app.use((req, res, next) => {
   }
 });
 
+app.use(rateLimiter({capacity:3,refillRate:1}))
  
 app.use("/private",userMiddleware,privateRoutes)
 
@@ -117,6 +121,13 @@ const shutdownServices = async(signal)=>{
    process.exit(0);
 }
 
+
+
 process.on("SIGINT",shutdownServices)
 process.on("SIGTERM", shutdownServices);
+
+
+
+
+ 
  

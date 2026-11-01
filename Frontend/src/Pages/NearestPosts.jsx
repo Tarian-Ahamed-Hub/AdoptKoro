@@ -5,6 +5,7 @@ import { useAuth } from '../Context/AuthProvider';
 import { useParams } from 'react-router-dom';
 import FeedFilters from '../Componets/Filters';
 import { useFilters } from '../Context/FilterContext';
+import AdoptionHero from '../Componets/AdoptionHero';
 
 export default function NearestPosts() {
  
@@ -185,23 +186,7 @@ export default function NearestPosts() {
 
   return (
     <div>
-        <header style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '20px 0',      // Vertical spacing (top/bottom)
-   borderBottom: '1px solid #b3b3b3' // Subtle line to define the header
-}}>
-    <h1 style={{
-        fontSize: '1.5rem',
-        fontWeight: '600',
-        margin: 0,           // Removes default browser spacing
-        fontFamily: 'sans-serif',
-        color: '#adadad'
-    }}>
-        Nearest Posts First
-    </h1>
-</header>
+      <AdoptionHero title="Find Nearest Pets"/>
       <FeedFilters />
       
       {/* PostList handles all rendering */}

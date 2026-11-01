@@ -3,6 +3,10 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import {BrowserRouter,Route,Routes,Navigate} from 'react-router-dom'
 import Login from './Pages/Login'
+import OTPVerification from './Pages/OTPVerification'
+import ForgotPassword from './Pages/ForgotPassword'
+import ResetPassword from './Pages/ResetPassword'
+import Register from './Pages/Register'
  
 import AuthProvider from './Context/AuthProvider'
 import PageNotFound from './Pages/PageNotFound'
@@ -13,7 +17,8 @@ import UserRoutes from './Private/Routes/UserRoutes'
 import Navbar from './Componets/Navbar'
 import FilterProvider from './Context/FilterContext'
 import { socket } from './Configs/Socket'
-import FeedWrapper from './Componets/FeedWrapper'
+ 
+import NearestPosts from './Pages/NearestPosts'
 
 function App() {
 
@@ -21,6 +26,7 @@ function App() {
    useEffect(() => {
 
     return () => {
+      if(socket.connected)
       socket.disconnect();
     };
   }, []);
@@ -46,9 +52,13 @@ function App() {
             
           <Routes>
              <Route path="/" element={<Navigate to="/feed/posts/nearest" replace />} />
-            <Route path='/feed/*' element={<FeedWrapper/> }/> 
+            <Route path='/feed/posts/nearest' element={<NearestPosts/> }/> 
           
             <Route path='/login' element={<GoogleAuthWrapper/> }/> 
+             <Route path='/register' element={<Register/> }/> 
+            <Route path='/otp' element={<OTPVerification/> }/> 
+            <Route path='/forgot-password' element={<ForgotPassword/> }/> 
+            <Route path='/reset-password' element={<ResetPassword/> }/> 
 
              <Route
             path="/user/*"

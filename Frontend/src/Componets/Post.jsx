@@ -100,39 +100,7 @@ const Post = ({ post, setPosts }) => {
   return (
     <>
       <div className="pc-card">
-        {/* Header */}
-        <div className="pc-header">
-          <img 
-            src={(() => {
-                                       if(user?.pic && user.pic!=="")
-                                        return user.pic
-                                      else{
-                                        return account;
-                                      }
-                                      })()} 
-            alt={post?.user.name}
-            className="pc-avatar"
-          />
-          <div className="pc-user-info">
-            <h3 className="pc-username">{post.user.name}</h3>
-            <p className="pc-timestamp">
-              {new Date(post.createdAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </p>
-          </div>
-          {user?.userId === post.user?.userId && (
-            <div className="pc-status-badge">
-              {post.active ? (
-                <span className="pc-badge pc-badge-available">Available</span>
-              ) : (
-                <span className="pc-badge pc-badge-adopted">Adopted</span>
-              )}
-            </div>
-          )}
-        </div>
+       
 
         {/* Image Container - Fixed Height */}
         <div className="pc-image-wrapper">
@@ -176,8 +144,33 @@ const Post = ({ post, setPosts }) => {
           </div>
         </div>
 
+         {/* Header */}
+        <div className="pc-header">
+        
+          <div className="pc-user-info">
+            <h3 className="pc-username">{post.user.name}</h3>
+            <p className="pc-timestamp">
+              {new Date(post.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </p>
+          </div>
+          {user?.userId === post.user?.userId && (
+            <div className="pc-status-badge">
+              {post.active ? (
+                <span className="pc-badge pc-badge-available">Available</span>
+              ) : (
+                <span className="pc-badge pc-badge-adopted">Adopted</span>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Content */}
         <div className="pc-content">
+          <h2 className="pc-title">About</h2>
           <h2 className="pc-title">{post.title}</h2>
           <p className="pc-description">{post.content}</p>
           

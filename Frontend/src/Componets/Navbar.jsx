@@ -20,10 +20,8 @@ export default function Navbar() {
         <div className="nav-item">
           <Link to={`/feed/posts/nearest`}><img style={{width:"32px"}} src={nearby}/></Link>
         </div>
-        <div className="nav-divider"></div>
-        <div className="nav-item">
-          <Link to={`/feed/latest/${currentCategory.name}/${currentDistrict.district}`}><img style={{width:"32px"}} src={pet}/></Link>
-        </div>
+      
+        
 
          
         
@@ -51,11 +49,9 @@ export default function Navbar() {
              (
                  <Link to={"/user/profile"}>
              <img src={(() => {
-                 if(user?.pic && user.pic!=="")
-                  return user.pic
-                else{
+             
                   return account;
-                }
+              
                 })() } 
                 style={{width:"30px",border:"0px solid black",borderRadius:"50%"}}
                 
@@ -64,7 +60,15 @@ export default function Navbar() {
               </Link>
              ):
              (
-              <Link to={"/login"}>Login</Link>
+              <Link to={"/login"}><img src={(() => {
+             
+                  return account;
+              
+                })() } 
+                style={{width:"30px",border:"0px solid black",borderRadius:"50%"}}
+                
+             >
+             </img></Link>
              )
 
              }

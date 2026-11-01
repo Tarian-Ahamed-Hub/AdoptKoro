@@ -1,81 +1,104 @@
+// server.js (or your main entry point)
 require("dotenv").config();
 const express = require("express");
+const http = require("http");
 const cookieParser = require('cookie-parser');
-
-
-const app = express();
-
-
-const {connect} = require("./Configs/db")
 const cors = require('cors');
- 
-const http = require("http")
-
-
-const {connectRedis,shutdownRedis} = require("./Configs/cacheRedis");
- 
+const { connect } = require("./Configs/db");
+const { connectRedis, shutdownRedis } = require("./Configs/cacheRedis");
 const { getKafkaProducer, connectKafkaProducer } = require("./Kafka/KafkaProducer");
- 
 const { connectKafkaRegistrationSubscriber } = require("./Kafka/KafkaRegistrationConsumer");
+const { connectKafkaChatSubscriber } = require("./Kafka/KafkaChatConsumer");
 const { initSocketIO } = require("./Socket/initSocket");
 const userMiddleware = require("./Middlewares/userMiddlewares");
 const { messageRoutes } = require("./Routes/PrivateRoutes/messageRoutes");
-const { connectKafkaChatSubscriber } = require("./Kafka/KafkaChatConsumer");
- 
- 
-connectRedis();
 
-connectKafkaProducer();
+const app = express();
+const port = process.env.INTERACTION_SERVICE_PORT || 3000;
 
-connectKafkaRegistrationSubscriber()
-connectKafkaChatSubscriber();
-const frontend_url = process.env.FRONTEND_URL;
-const gateway_url = process.env.GATEWAY_SERVICE_URL;
-const corsOptions = {
-  origin: [frontend_url,gateway_url ],
+// Middleware
+app.use(cors({
+  origin: [process.env.FRONTEND_URL, process.env.GATEWAY_SERVICE_URL],
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With"
-  ],
-};
-
-app.use(cors(corsOptions))
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+}));
 app.use(cookieParser());
 app.use(express.json());
- 
-app.use("/message",userMiddleware,messageRoutes)
 
-app.get("/test",async(req,res)=>{
+
+app.use("/message", userMiddleware, messageRoutes);
+
+
+app.get("/test", async (req, res) => {
+  
   return res.status(200).json({
-    message:"Interaction sevice running"
-  })
-})
+    message: "Interaction service running",
+    pod: process.env.HOSTNAME || "local" + process.pid,
+
+  });
+});
 
 
+const httpServer = http.createServer(app);
+
+
+const startServer = async () => {
+  try {
+  
+    const io = await initSocketIO(httpServer);
+    
+
+    await connect();
+    connectRedis();
+    await connectKafkaProducer();
+    await connectKafkaRegistrationSubscriber();
+    await connectKafkaChatSubscriber();
+    
+    httpServer.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+      console.log(`Pod: ${process.env.HOSTNAME || "local"}`);
+      console.log(`Socket.IO ready with Redis adapter`);
+    });
+    
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+// Graceful shutdown
+const shutdownServices = async () => {
+  console.log("Shutting down gracefully...");
+  
  
-const port= process.env.INTERACTION_SERVICE_PORT;
+  if (httpServer) {
+    httpServer.close(() => {
+      console.log("HTTP server closed");
+    });
+  }
+  
+  // Disconnect Kafka
+  try {
+    await getKafkaProducer().disconnect();
+    console.log("Kafka disconnected");
+  } catch (err) {
+    console.error("Error disconnecting Kafka:", err);
+  }
+  
+ 
+  try {
+    await shutdownRedis();
+    console.log("Redis disconnected");
+  } catch (err) {
+    console.error("Error disconnecting Redis:", err);
+  }
+  
+  process.exit(0);
+};
 
-const appServer = http.createServer(app);
-initSocketIO(appServer)
-
-appServer.listen(port,()=>{
-    console.log("Interactin-service running on port ",port);
-})
-
-
-const shutdownServices = async(signal)=>{
-  console.log(`Received ${signal}. Shutting down services`);
-  const kafkaproducer = getKafkaProducer();
-  await kafkaproducer.disconnect()
-  console.log("Producer disconnected")
-  await shutdownRedis();
-  console.log("Redis disconnected")
-   process.exit(0);
-}
-
-process.on("SIGINT",shutdownServices)
+process.on("SIGINT", shutdownServices);
 process.on("SIGTERM", shutdownServices);
- 
+
+// Start the server
+startServer();

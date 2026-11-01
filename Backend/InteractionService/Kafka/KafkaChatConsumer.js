@@ -36,6 +36,7 @@ try{
             resolveOffset(message.offset);
           } catch (err) {
             console.error("Invalid message JSON:", message.value.toString());
+            break;
           }
           processed++;
         }

@@ -2,13 +2,17 @@ import { io } from "socket.io-client";
 
 export const socket = io("http://localhost:8003", {
   autoConnect: false,  
-  withCredentials: true,
-   transports: ["websocket", "polling"],
+   transports: ["websocket"],
+  auth: {
+    token: localStorage.getItem("token"),  
+  },
 });
 
 socket.on("connect_error", (err) => {
   console.log("Socket connection error:", err.message);
-
+ 
    
   alert(`Socket Error: ${err.message}`);
 });
+
+ 

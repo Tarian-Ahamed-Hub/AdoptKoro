@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e1b4b"/>
+      <stop offset="0.55" stop-color="#312e81"/>
+      <stop offset="1" stop-color="#9a3412"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fb923c"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <circle cx="1120" cy="90" r="220" fill="#ffffff" opacity="0.05"/>
+  <circle cx="140" cy="590" r="260" fill="#ffffff" opacity="0.05"/>
+
+  <!-- paw -->
+  <g transform="translate(160 150) scale(5.2)" fill="url(#accent)">
+    <ellipse cx="32" cy="42" rx="16" ry="12"/>
+    <circle cx="17" cy="26" r="7"/>
+    <circle cx="30" cy="18" r="7"/>
+    <circle cx="44" cy="22" r="7"/>
+    <circle cx="53" cy="34" r="6"/>
+  </g>
+
+  <text x="560" y="270" font-size="104" font-weight="bold" fill="#ffffff">Adopt Koro</text>
+  <rect x="564" y="294" width="220" height="8" rx="4" fill="url(#accent)"/>
+  <text x="560" y="365" font-size="28" fill="#e0e7ff">Find a pet. Message the owner. Give them a home.</text>
+  <text x="560" y="410" font-size="22" fill="#c7d2fe">Real-time pet adoption platform built with microservices</text>
+
+  <!-- chips -->
+  <g font-size="20" font-weight="bold" fill="#ffffff">
+    <rect x="560" y="470" width="110" height="44" rx="22" fill="#ffffff" fill-opacity="0.14"/>
+    <text x="615" y="499" text-anchor="middle">React</text>
+    <rect x="684" y="470" width="110" height="44" rx="22" fill="#ffffff" fill-opacity="0.14"/>
+    <text x="739" y="499" text-anchor="middle">Node.js</text>
+    <rect x="808" y="470" width="110" height="44" rx="22" fill="#ffffff" fill-opacity="0.14"/>
+    <text x="863" y="499" text-anchor="middle">Kafka</text>
+    <rect x="932" y="470" width="110" height="44" rx="22" fill="#ffffff" fill-opacity="0.14"/>
+    <text x="987" y="499" text-anchor="middle">Redis</text>
+    <rect x="1056" y="470" width="130" height="44" rx="22" fill="#ffffff" fill-opacity="0.14"/>
+    <text x="1121" y="499" text-anchor="middle">Socket.IO</text>
+  </g>
+</svg>

@@ -1,38 +1,51 @@
-  const { createAdapter } = require('@socket.io/redis-adapter');
-const { Redis } = require('ioredis');
+// initSocket.js
 const { Server } = require('socket.io');
 const { setupSocketEvents } = require('./socketEvents');
 
 let io;
 
 const initSocketIO = async (httpServer) => {
- 
+  io = new Server(httpServer, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+      credentials: true,
+    },
+    transports: ["websocket"],
+  });
 
-  const socketRedisUrl = process.env.REDIS_SOCKET_URL;
+  const redisUrl = process.env.REDIS_SOCKET_URL;
 
-  if (socketRedisUrl) {
+  if (redisUrl) {
     try {
-      const pubClient = new Redis(socketRedisUrl);
-      const subClient = new Redis(socketRedisUrl);
-      await Promise.all([pubClient.ping(), subClient.ping()]);
-      io = new Server(httpServer, { cors: { origin: "*", methods: ["GET", "POST"],credentials: true, }, adapter: createAdapter(pubClient, subClient) });
-      console.log(`Socket connected with Redis}`);
-      setupSocketEvents(io);
-   
+      const { Redis } = require("ioredis");
+      const { createAdapter } = require("@socket.io/redis-adapter");
+
+      const pubClient = new Redis(redisUrl);
+      const subClient = pubClient.duplicate();
+      
+      // await Promise.all([pubClient.connect(), subClient.connect()]);
+
+      // Only Redis adapter needed for cross-pod communication
+      io.adapter(createAdapter(pubClient, subClient));
+
+      console.log(
+      "Redis adapter active:",
+      typeof io.of("/").adapter?.constructor?.name
+    );
     } catch (err) {
-      console.warn('Socket.IO No Redis', err.message);
-      io = new Server(httpServer, { cors: { origin: "*", methods: ["GET", "POST"] } });
+      console.error(`Redis adapter failed: ${err.message}`);
+      // Don't exit - fallback to single pod mode
+      console.warn("Running without Redis adapter - cross-pod communication disabled");
     }
   } else {
-    console.log('Socket.IO No Redis');
-    io = new Server(httpServer, { cors: { origin: "*", methods: ["GET", "POST"] } });
+    console.log("Socket.IO: Running without Redis adapter (single pod mode)");
   }
-  
 
+  setupSocketEvents(io);
+  return io;
 };
 
-const getSocketIo = ()=>{
-    return io;
-}
+const getSocketIo = () => io;
 
-module.exports = { initSocketIO,getSocketIo };
+module.exports = { initSocketIO, getSocketIo };

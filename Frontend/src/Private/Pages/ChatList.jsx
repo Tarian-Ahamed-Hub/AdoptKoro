@@ -24,9 +24,8 @@ const ChatList = () => {
     };
 
     fetchConversation();
-
-    socket.on("receive_text", (data) => {
-      setChats((prev) => {
+    const handle_recieve = (data)=>{
+       setChats((prev) => {
         let newArr = prev.filter((chat) => {
           if (chat.conversationId !== data.conversationId)
             return true;
@@ -35,7 +34,12 @@ const ChatList = () => {
         return [data, ...newArr];
       });
       console.log("message received", data);
-    });
+
+    }
+    socket.on("receive_text", handle_recieve);
+    return ()=>{
+       socket.off("receive_text", handle_recieve);
+    }
   }, [user]);
   console.log("In Chatlist ",user)
   const truncateMessage = (text, maxLength = 50) => {

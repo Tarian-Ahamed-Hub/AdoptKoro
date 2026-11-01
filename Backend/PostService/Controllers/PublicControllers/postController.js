@@ -149,310 +149,176 @@ const updatePost = async (req, res) => {
 };
 
 
-let CACHE_TTL = 15
+let CACHE_TTL = 30
 let MAX_POSTS = 8
-const cacheAllPosts = async(cacheKey,posts)=>{
-  
-  try{
-const redis = getRedisClient();
-  const pipeline = redis.pipeline();
 
-  for (let i = 0; i < posts.length; i++) {
-    const post = posts[i];
-    let postCacheKey = `cache:post:${post._id.toString()}`
-    let postJson = JSON.stringify(post);
-    pipeline.hset(postCacheKey,'content',postJson);
-    pipeline.zadd(cacheKey,posts.length-i,post._id.toString())
 
-       
-    pipeline.expire(postCacheKey, CACHE_TTL);
-    
+const cacheAllPosts = async (cacheKey, data) => {
+  try {
+    const { posts, hasMore, nextCursor } = data;
+    const pipeline = getRedisClient().pipeline();
+
+    posts.forEach((post, i) => {
+      const id = post._id.toString();
+      const postKey = `cache:post:${id}`;
+      pipeline.hset(postKey, "content", JSON.stringify(post));
+      pipeline.expire(postKey, CACHE_TTL);
+      pipeline.zadd(cacheKey, posts.length - i, id);
+    });
+
+    if (posts.length) pipeline.expire(cacheKey, CACHE_TTL);
+    pipeline.set(`${cacheKey}:meta`, JSON.stringify({ hasMore, nextCursor }), "EX", CACHE_TTL);
+
+    await pipeline.exec();
+  } catch (err) {
+    console.log("Failed to cache posts:", err.message);
   }
-
-   pipeline.expire(cacheKey, CACHE_TTL);  
-  await pipeline.exec();
-
-  }
-  catch(err){
-    console.log(err.message);
-    console.log("Failed to cache posts")
-  }
-  
-
-}
-
-const getPostsFromCache = async(cacheKey)=>{
-  try{
-const redis = getRedisClient();
-let posts = []
-const postIds = await redis.zrevrange(cacheKey,0,MAX_POSTS-1);
- 
-if (postIds.length === 0) {
-     return {
-      posts: [],
-      hasMore:false,
-      nextCursor:null
-    };
-  }
-  const pipeline = redis.pipeline();
-
-  postIds.forEach(postId => {
-    pipeline.hmget(`cache:post:${postId}`,'content');
-
-  });
-
-const pipelineResult = await pipeline.exec();
- const postsFiltered = pipelineResult
-    .map(([err, reply]) => {
-      if (err || !reply || !reply[0]) return null;
-      return JSON.parse(reply[0]);
-    })
-    .filter(Boolean);   
-
-    posts = postsFiltered
-    let hasMore = false;
-    let nextCursor = null
-    
-
-  if(posts.length===MAX_POSTS){
-     hasMore = true;
-    
-  }
-
-  if(hasMore){
-    nextCursor = posts[posts.length-1]._id
-  }
- 
-  return {
-      posts: posts,
-      hasMore,
-      nextCursor
-    };
-  }
-  catch(err){
-    console.log(err.message)
-    return {
-      posts: [],
-      hasMore:false,
-      nextCursor:null
-    };
-  }
-
- 
-}
+};
 
 
-
-const getNearestPostFromDB =async(lon,lat,category,limit=MAX_POSTS,cursor,cachekey)=>{
-
-  try{
- 
-const geoNearStage = {
-      $geoNear: {
-        near: {
-          type: "Point",
-          coordinates: [parseFloat(lon), parseFloat(lat)],
-        },
-        distanceField: "distance",
-        spherical: true,
-        key: "location",
-        query: { category,active: true },
-      },
-    };
-
-  
-    if (cursor && typeof cursor.distance === "number") {
-      geoNearStage.$geoNear.minDistance = Number(cursor.distance);
-    }
-
-    const stages = [geoNearStage];
-
-    if (cursor && cursor._id && typeof cursor.distance === "number") {
-      const lastId = new mongoose.Types.ObjectId(cursor._id);
-      const lastDistance = Number(cursor.distance);
-
-      stages.push({
-        $match: {
-          $or: [
-            { distance: { $gt: lastDistance } },                   
-            {
-              distance: lastDistance,                              
-              _id: { $lt: lastId },                                
-            },
-          ],
-        },
-      });
-    }
-
-    // Full aggregation pipeline
-    const posts = await Post.aggregate([
-      ...stages,
-      { $sort: { distance: 1, _id: -1 } },    
-      { $limit: MAX_POSTS + 1 },
-      {
-        $lookup: {
-          localField: "userId",
-          foreignField: "userId",
-          from: "users",
-          as: "user",
-        },
-      },
-      { $unwind: "$user" },
-
-      {
-        $project: {
-          title: 1,
-          content: 1,
-          pics: 1,
-          category: 1,
-          district: 1,
-          distance: 1,
-          createdAt: 1,
-          active: 1,
-          "user.name": 1,
-          "user.pic": 1,
-          "user.userId": 1,
-        },
-      },
+const getPostsFromCache = async (cacheKey) => {
+  try {
+    const redis = getRedisClient();
+    const [metaRaw, postIds] = await Promise.all([
+      redis.get(`${cacheKey}:meta`),
+      redis.zrevrange(cacheKey, 0, MAX_POSTS - 1),
     ]);
- 
-  
-  let hasMore = false;
-    let nextCursor = null
-    
+    if (!metaRaw) return null;
 
-  if(posts.length===MAX_POSTS+1){
-     hasMore = true;
-     posts.pop();
-    
+    const meta = JSON.parse(metaRaw);
+    if (!postIds.length) return { posts: [], ...meta };
+
+    const pipeline = redis.pipeline();
+    postIds.forEach((id) => pipeline.hget(`cache:post:${id}`, "content"));
+    const results = await pipeline.exec();
+
+    const posts = results.map(([err, reply]) => (err || !reply ? null : JSON.parse(reply)));
+    if (posts.some((p) => !p)) return null;
+
+    return { posts, ...meta };
+  } catch (err) {
+    console.log("cache read failed:", err.message);
+    return null;
   }
+};
 
+const getNearestPostFromDB = async (lon, lat, category, limit, cursor, cacheKey) => {
+  const geoNearStage = {
+    $geoNear: {
+      near: { type: "Point", coordinates: [parseFloat(lon), parseFloat(lat)] },
+      distanceField: "distance",
+      spherical: true,
+      key: "location",
+      query: { category, active: true },
+    },
+  };
 
-  if(hasMore){
-    nextCursor = posts[posts.length-1]._id
-  }
+  const stages = [geoNearStage];
 
-  if(posts.length){
-   
-      await cacheAllPosts(cachekey,posts);
-    }
+  if (cursor && cursor._id && typeof cursor.distance === "number") {
+    const lastId = new mongoose.Types.ObjectId(cursor._id);
+    const lastDistance = Number(cursor.distance);
 
-  return {
-      posts: posts,
-      hasMore,
-      nextCursor
-    };
-
-  }
-  catch(err){
-    console.log(err.message)
-    return {
-      posts: [],
-      hasMore:false,
-      nextCursor:null
-    };
-  }
-}
-
-const nearestPosts = async (req, res) => {
-
-
-  try{
-
-    const { lon,lat, category,cursor=null } = req.body;
-
-  let coordinates = [lon,lat]
-  
-
-    // Validation
-  if (!coordinates || !Array.isArray(coordinates) || coordinates.length !== 2) {
-    return res.status(400).json({
-      success: false,
-      message: "coordinates must be [longitude, latitude] array in req.body",
+    geoNearStage.$geoNear.minDistance = lastDistance;
+    stages.push({
+      $match: {
+        $or: [
+          { distance: { $gt: lastDistance } },
+          { distance: lastDistance, _id: { $lt: lastId } },
+        ],
+      },
     });
   }
+
+  const posts = await Post.aggregate([
+    ...stages,
+    { $sort: { distance: 1, _id: -1 } },
+    { $limit: limit + 1 },
+    {
+      $lookup: { localField: "userId", foreignField: "userId", from: "users", as: "user" },
+    },
+    { $unwind: "$user" },
+    {
+      $project: {
+        title: 1, content: 1, pics: 1, category: 1, district: 1,
+        distance: 1, createdAt: 1, active: 1,
+        "user.name": 1, "user.pic": 1, "user.userId": 1,
+      },
+    },
+  ]);
+
+  const hasMore = posts.length === limit + 1;
+  if (hasMore) posts.pop();
   
-  const parsedLon = parseFloat(lon);
-    const parsedLat = parseFloat(lat);
+  let last;
+  if(posts.length>0 && hasMore)
+  last = posts[posts.length - 1];
 
- 
-  
+  const data = {
+    posts,
+    hasMore,
+    nextCursor: hasMore ? { _id: last._id, distance: last.distance } : null,
+  };
 
-  let postData=null;
-  let cacheKey = `nearest:${lon}-${lat}:${category}:${cursor}`
-  const lockKey = `${cacheKey}:lock`;
-  let redis = getRedisClient()
-  let cacheExists = await redis.exists(cacheKey)
-  if(cacheExists){
-   
-    postData =  await getPostsFromCache(cacheKey);
-    
+  await cacheAllPosts(cacheKey, data); 
+  return data;
+};
 
-    console.log("FROM CACHE")
-   
-  }
-  else{
-    const lockAcquired = await redis.set(lockKey, "1", "NX", "PX", 15000);
-    if(lockAcquired==="OK"){
-      try{
-           postData = await getNearestPostFromDB(lon,lat,category,MAX_POSTS,cursor,cacheKey)
-         console.log("FROM DB")
+const nearestPosts = async (req, res) => {
+  try {
+    const { lon, lat, category, cursor = null } = req.body;
 
+    const cursorKey = cursor ? `${cursor.distance}:${cursor._id}` : "first";
+    const cacheKey = `nearest:${lon}-${lat}:${category}:${cursorKey}`;
+    const lockKey = `${cacheKey}:lock`;
+
+    let postData = await getPostsFromCache(cacheKey);
+
+    if (postData) {
+      console.log("FROM CACHE");
+    } else {
+      const redis = getRedisClient();
+
+      let locked = false;
+      let redisUp = true;
+      try {
+        locked = (await redis.set(lockKey, "1", "NX", "PX", 15000)) === "OK";
+      } catch (err) {
+        redisUp = false;
+        console.log("lock failed, going straight to DB:", err.message);
       }
-      catch(err){
-        throw err;
-      }
-      finally {
-        await redis.del(lockKey);
-      }
-  
-    }
-    else{
-       let attempts = 1;
-       let max_attempts = 5;
-       let wait_time = 200;
 
-       while(attempts<=max_attempts){
-          await new Promise((resolve)=>setTimeout(resolve,wait_time));
-
-          if (await redis.exists(cacheKey)) {
+      if (locked || !redisUp) {
+        try {
+          postData = await getNearestPostFromDB(lon, lat, category, MAX_POSTS, cursor, cacheKey);
+          console.log("FROM DB");
+        } finally {
+          if (locked) await redis.del(lockKey).catch(() => {});
+        }
+      } else {
+        for (let attempt = 1; attempt <= 5 && !postData; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
           postData = await getPostsFromCache(cacheKey);
-          console.log(`FROM CACHE (after wait, attempt ${attempts}),max time ${attempts*wait_time}ms`);
-          break;
-          }
+          if (postData) console.log(`FROM CACHE (after wait, attempt ${attempt})`);
+        }
 
-          attempts++;
-
-       }
-       if(!postData){
-        throw err;
-       }
-    }
-    
-  }
-  
-  return res.status(200).json({
-       message:"Fetched Posts",
-      postCount:postData.posts.length,
-       ...postData,
       
-        
-    })
+        if (!postData) {
+          postData = await getNearestPostFromDB(lon, lat, category, MAX_POSTS, cursor, cacheKey);
+          console.log("FROM DB (after wait)");
+        }
+      }
+    }
 
-
+    return res.status(200).json({
+      message: "Fetched Posts",
+      postCount: postData.posts.length,
+      ...postData,
+    });
+  } catch (err) {
+    console.log("nearestPosts failed:", err.message);
+    return res.status(503).json({ success: false, message: "Please Try Again" });
   }
-  catch(err){
-      return res.status(503).json({
-          success: false,
-          message: "Please Try Again",
-      });
-  }
- 
-
-
-//members = await redis.zrange(key, "2450","+inf",  "BYSCORE", "LIMIT", 0, 10,'WITHSCORES')
-
-
 };
 
 

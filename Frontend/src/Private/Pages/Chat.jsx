@@ -20,6 +20,13 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const loadMoreRef = useRef(null);
+  
+ 
+
+  const getCount = async()=>{
+        const messageCount = await axios.get("/api/interaction/message/messageCount")
+        setUnreadMessageCount(messageCount.data.unseenCount);
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -94,27 +101,24 @@ const Chat = () => {
     if (!user) return;
 
     socket.emit("join_room", { roomId: conversationId });
-
+    
     let isFirstSocketMessage = false;
 
-    socket.on("receive_text_convo", (data) => {
-      if (data.userId === user.userId) {
-        data.userId = "current";
-      }
+    const handleMessage = (data) => {
+    if (data.userId === user.userId) {
+      data.userId = "current";
+    }
 
-      console.log(data);
-      setConversation((prev) => {
-        return [...prev, data];
-      });
+    setConversation((prev) => [...prev, data]);
 
-      // Scroll to bottom only on new incoming messages (not on load more)
-      // Use setTimeout to ensure state is updated first
-      if (!isLoadingMore) {
-        setTimeout(() => {
-          scrollToBottom();
-        }, 0);
-      }
-    });
+    if (!isLoadingMore) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 0);
+    }
+  };
+
+    socket.on("receive_text_convo",handleMessage);
 
     // Fetch conversation details (initial load, no cursor)
     const fetchConversation = async () => {
@@ -127,7 +131,7 @@ const Chat = () => {
         setConversation(response.data.chats);
         setCursor(response.data.cursor);
         setHasMore(response.data.hasMore);
-        setUnreadMessageCount(prev=>prev-response.data.seenCount)
+       
         setIsInitialLoad(false); // Mark initial load as complete
         
         console.log('Conversation loaded:', response.data);
@@ -139,9 +143,11 @@ const Chat = () => {
     };
 
     fetchConversation();
+    getCount()
 
     return () => {
       socket.emit("leave_room", conversationId);
+      socket.off("receive_text_convo", handleMessage);
     };
   }, [user, conversationId]);
 
@@ -182,6 +188,7 @@ const Chat = () => {
     };
 
     try {
+       
       const response = await axios.post("/api/interaction/message/sendText", data);
       setInputValue('');
     } catch (err) {
@@ -268,8 +275,9 @@ const Chat = () => {
                 )}
                 <div className={`chat-message-bubble ${isCurrentUser ? 'sent-bubble' : 'received-bubble'}`}>
                   <p className="chat-message-text">{item.text}</p>
-                  <span className="chat-message-time">{formatTime(item.createdAt)}</span>
+                  
                 </div>
+                <span className="chat-message-time">{formatTime(item.createdAt)}</span>
                 <div className="chat-message-meta">
                   {isCurrentUser && (
                     <span className={`chat-message-status ${item.seen ? 'seen' : ''}`}>
