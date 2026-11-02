@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="docs/banner.svg" alt="Adopt Koro" width="100%"/>
-
-<br/>
+# Adopt Koro
 
 **A real-time pet adoption platform built on a microservice architecture.**
 
