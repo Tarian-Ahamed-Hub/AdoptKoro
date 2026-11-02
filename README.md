@@ -17,8 +17,8 @@
 </p>
 
 <p>
-  <a href="#features">Features</a> ·
   <a href="#architecture">Architecture</a> ·
+  <a href="#features">Features</a> ·
   <a href="#getting-started">Getting started</a> ·
   <a href="#api-overview">API</a>
 </p>
@@ -27,41 +27,29 @@
 
 ---
 
-## Features
-
-| | |
-|---|---|
-| **Flexible auth** | Google sign-in, or email + password with OTP for login, registration and password reset |
-| **Adoption posts** | Create listings with up to 5 photos, mark them adopted or available |
-| **Nearest pets** | Browse posts closest to your chosen district first, filtered by category, with infinite scroll |
-| **Real-time chat** | Message post owners instantly, with seen receipts and unread badges |
-| **Encrypted messages** | Chat text is encrypted before it is stored |
-| **Built to scale writes** | Posts and chat messages are written through Kafka in batches |
-| **Rate limiting** | Token bucket rate limiter on the post endpoints protects PostService from abuse and traffic bursts |
-
 ## Architecture
 
 <div align="center">
-  <img src="architecture.svg" alt="Architecture diagram" width="100%"/>
+  <img src="docs/adopt-koro-architecture.jpg" alt="Architecture diagram" width="100%"/>
 </div>
 
-| Service | Responsibility | Data |
+| Service | Responsibility | Database |
 |---|---|---|
 | **Gateway** | Reverse proxy for `/api/auth`, `/api/post`, `/api/interaction` | none |
 | **UserService** | Google OAuth, OTP auth, JWT sessions, logout blocklist | `users` `sessions` `otps` |
 | **PostService** | Post CRUD, nearest-first feed, Redis feed cache, token bucket rate limiting | `posts` `categories` `districts` `users`\* |
 | **InteractionService** | Chat, Socket.IO, unseen counts, message encryption | `conversations` `chats` `users`\* |
 
-Each service owns its own MongoDB database. \* `users` is a read replica kept in sync through Kafka.
+Every service has its own MongoDB database and connects to it directly. \* `users` is a local copy created from the Kafka `registration` event.
 
 <details>
-<summary><b>How data moves between services</b></summary>
+<summary><b>How Kafka is used</b></summary>
 
 <br/>
 
-- **Registration:** UserService publishes new users to the `registration` topic. PostService and InteractionService consume it and upsert into a local `users` collection.
-- **Posts:** `createPost` publishes to the `posts` topic. PostService consumes in batches and bulk-inserts.
-- **Chat:** `sendText` encrypts the message and publishes to the `chat` topic. InteractionService bulk-inserts in batches and also pushes the message to clients over Socket.IO right away.
+- **Registration event:** when a user signs up, UserService publishes it to the `registration` topic. PostService and InteractionService consume it and save the user in their own database. This is the only data one service tells another through Kafka.
+- **Post write queue:** `createPost` publishes to the `posts` topic. PostService consumes in batches and bulk-inserts.
+- **Chat write queue:** `sendText` encrypts the message and publishes to the `chat` topic. InteractionService bulk-inserts in batches and also pushes the message to clients over Socket.IO right away.
 - **Cross-service reads:** InteractionService calls PostService's `getPost` through the Gateway to validate a post when a conversation starts.
 
 </details>
@@ -82,6 +70,27 @@ Each service owns its own MongoDB database. \* `users` is a read replica kept in
 
 </details>
 
+## Features
+
+| | |
+|---|---|
+| **Flexible auth** | Google sign-in, or email + password with OTP for login, registration and password reset |
+| **Adoption posts** | Create listings with up to 5 photos, mark them adopted or available |
+| **Nearest pets** | Browse posts closest to your chosen district first, filtered by category, with infinite scroll |
+| **Real-time chat** | Message post owners instantly, with seen receipts and unread badges |
+| **Encrypted messages** | Chat text is encrypted before it is stored |
+| **Built to scale writes** | Posts and chat messages are written through Kafka in batches |
+| **Rate limiting** | Token bucket rate limiter on the post endpoints protects PostService from abuse and traffic bursts |
+
+<p align="center">
+  <img src="docs/image.png" alt="Browse nearest posts" width="49%"/>
+  <img src="docs/image2.png" alt="Post feed" width="49%"/>
+</p>
+<p align="center">
+  <img src="docs/image3.png" alt="Chat list" width="49%"/>
+  <img src="docs/image4.png" alt="Real-time chat" width="49%"/>
+</p>
+
 ## Tech stack
 
 | Layer | Tools |
@@ -96,12 +105,13 @@ Each service owns its own MongoDB database. \* `users` is a read replica kept in
 
 ```
 adopt-koro/
-├── Gateway/              # API gateway
-├── UserService/          # auth and sessions
-├── PostService/          # listings and feeds
-├── InteractionService/   # chat and Socket.IO
-├── client/               # React app
-└── docs/                 # banner and images
+├── Backend/
+│   ├── Gateway/              # API gateway
+│   ├── UserService/          # auth and sessions
+│   ├── PostService/          # listings, feeds, rate limiter
+│   └── InteractionService/   # chat and Socket.IO
+├── client/                   # React app
+└── docs/                     # banner, architecture diagram, screenshots
 ```
 
 ## Getting started
@@ -120,11 +130,11 @@ git clone https://github.com/<your-username>/adopt-koro.git
 cd adopt-koro
 
 # 2. configure: copy .env.example to .env in every service and fill it in
-for s in Gateway UserService PostService InteractionService; do cp $s/.env.example $s/.env; done
+for s in Gateway UserService PostService InteractionService; do cp Backend/$s/.env.example Backend/$s/.env; done
 cp client/.env.example client/.env
 
 # 3. install and run each service
-cd UserService && npm install && npm run dev
+cd Backend/UserService && npm install && npm run dev
 ```
 
 Repeat step 3 for `PostService`, `InteractionService`, `Gateway` and `client`.
@@ -147,7 +157,3 @@ All requests go through the Gateway.
 - [ ] Deployment
 - [ ] Image moderation
 - [ ] Push notifications for new messages
-
-## License
-
-Released under the [MIT License](LICENSE).

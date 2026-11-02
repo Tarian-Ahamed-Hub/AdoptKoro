@@ -1975,13 +1975,13 @@ background-color: transparent;
 
 .pc-tag-category {
   background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
+  color: #0e0e0e;
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .pc-tag-district {
   background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+  color: #000000;
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 

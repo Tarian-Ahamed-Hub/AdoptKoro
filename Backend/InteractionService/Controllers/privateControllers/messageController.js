@@ -219,7 +219,7 @@ const sendText = async (req, res) => {
       io.to(`room:${memberId}`).emit("receive_text", chatListUpdate);
     });
     io.to(`room:${conversationId}`).emit("receive_text_convo", chatData);
-
+     
     return res.status(200).json({ message: "message sent" });
   } catch (err) {
     console.log(checkStatus());
@@ -248,7 +248,7 @@ const getUnseenCount = (req, res) => {
                   $and: [
                     { $eq: ["$conversationId", "$$conversationId"] },
                     { $eq: ["$seen", false] },
-                    { $ne: ["$userId", userId] },
+                    { $ne: ["$userId", new mongoose.Types.ObjectId(userId)] },
                   ],
                 },
               },

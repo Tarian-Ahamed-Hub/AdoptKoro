@@ -1,6 +1,7 @@
  
 const cookie = require('cookie')
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const Conversation = require('../Models/Conversation');
 const socketMiddleware = (socket, next) => {
   try {
      let token = socket.handshake.auth?.token;
@@ -41,13 +42,13 @@ function setupSocketEvents(io) {
           console.log(`${userName} (${userId}) denied room ${roomId}`);
           return;
         }
-
+ 
         socket.join(`room:${roomId}`);
       } catch (err) {
         console.log("join_room error:", err.message);
       }
     });
-    
+
 
      socket.on("leave_room", (roomId) => {
         socket.leave(`room:${roomId}`);
