@@ -123,113 +123,6 @@ const conversationDetails = (req, res) => {
   });
 };
 
-const resolveConversation = async ({ body, sender }) => {
-  const { conversationId, receiverId, postId } = body;
-
-  if (conversationId) {
-    const conversation = await Conversation.findOne({
-      members: sender.userId,
-      conversationId,
-    });
-
-    if (!conversation) {
-      return {
-        error: { status: 400, message: "You dont have access to this conversation" },
-      };
-    }
-    return { conversation };
-  }
-
-  const existingConversation = await Conversation.findOne({
-    postId,
-    members: sender.userId,
-  });
-  if (existingConversation) {
-    return { conversation: existingConversation };
-  }
-
-  const post = await fetchPost(postId);
-  if (!receiverId || post.userId !== receiverId) {
-    return { error: { status: 404, message: "post doesnt exist" } };
-  }
-
-  const conversation = await Conversation.create({
-    postId: post._id,
-    conversationId: uuidv4(),
-    members: [receiverId, sender.userId],
-    conversationName: post.title,
-  });
-  return { conversation };
-};
-
-const sendText = async (req, res) => {
-  try {
-    const { text } = req.body;
-    const sender = req.user;
-
-    const { conversation, error } = await resolveConversation({
-      body: req.body,
-      sender,
-    });
-    if (error) {
-      return res.status(error.status).json({ message: error.message });
-    }
-
-    const { conversationId, conversationName } = conversation;
-    const createdAt = new Date();
-
-    const chatData = {
-      conversationId,
-      conversationName,
-      userId: sender.userId,
-      name: sender.userName,
-      pic: sender.pic,
-      text,
-      createdAt,
-      seen: false,
-    };
-
-    const { iv, encryptedContent } = encrypt(text);
-    await getKafkaProducer().send({
-      topic: "chat",
-      compression: CompressionTypes.GZIP,
-      messages: [
-        {
-          key: "key",
-          value: JSON.stringify({ ...chatData, iv, text: encryptedContent }),
-        },
-      ],
-    });
-
-    const io = getSocketIo();
-    const chatListUpdate = {
-      conversationId,
-      conversationName,
-      lastMessage: {
-        userId: sender.userId,
-        name: sender.userName,
-        pic: sender.pic,
-        text,
-        createdAt,
-        seen: false,
-      },
-    };
-
-    conversation.members.forEach((memberId) => {
-      io.to(`room:${memberId}`).emit("receive_text", chatListUpdate);
-    });
-    io.to(`room:${conversationId}`).emit("receive_text_convo", chatData);
-     
-    return res.status(200).json({ message: "message sent" });
-  } catch (err) {
-    console.log(checkStatus());
-
-    if (err.response?.status === 404) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    return res.status(400).json({ message: err.message });
-  }
-};
 
 const getUnseenCount = (req, res) => {
   dbHandler(res, async () => {
@@ -276,4 +169,4 @@ const addChat = async (chats) => {
   await Chat.bulkWrite(operations);
 };
 
-module.exports = { sendText, conversationDetails, chatList, getUnseenCount, addChat };
+module.exports = {  conversationDetails, chatList, getUnseenCount, addChat };
